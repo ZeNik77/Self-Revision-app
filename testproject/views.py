@@ -19,4 +19,6 @@ def signup(request):
             # user.save()
             form.save()
             return redirect(reverse('index'))
+        else:
+            return render(request, 'signup.html', {'form': form})
     return render(request, 'signup.html', {'form': SignUpForm})
