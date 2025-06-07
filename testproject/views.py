@@ -14,11 +14,11 @@ def signup(request):
     if request.method == 'POST':
         form = SignUpForm(data=request.POST)
         if form.is_valid():
-            user = form.save()
             if len(User.objects.all()) == 0:
                 user_id = 1
             else:
                 user_id = User.objects.all().last().user_id + 1
+            user = form.save()
             user.user_id = user_id
             user.save()
             auth.login(request, user)
