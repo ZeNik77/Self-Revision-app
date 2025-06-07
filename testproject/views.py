@@ -40,6 +40,7 @@ def logout(request):
     auth.logout(request)
     return redirect(reverse('index'))
 
+
 # Вот кому-то делать нехуй
 
 def printAllUsers():
@@ -59,13 +60,29 @@ def superUsers():
 
 def courses (request):
     if request.method == "POST":
-        form = AddCourseForm(data=request.POST)
-        if form.is_valid():
-            name = form.cleaned_data['name']
-            desc = form.cleaned_data['description']
-            Courses.objects.create(name=name, description=desc)
-        else:
-            print(form.errors)
+        if "add_course" in request.POST:
+            form = AddCourseForm(data=request.POST)
+            if form.is_valid():
+                name = form.cleaned_data['name']
+                desc = form.cleaned_data['description']
+                Courses.objects.create(name=name, description=desc)
+            else:
+                print(form.errors)
+        if 'edit_course' in request.POST:
+            course_id = request.POST['edit_course']
+            new_name = request.POST['name']
+            new_desc = request.POST['description']
+            print(new_name, new_desc)
+            courses = Courses.objects.filter(id=course_id)
+            if courses:
+                courses[0].name = new_name
+                courses[0].description = new_desc
+                courses[0].save()
+        elif 'delete_course' in request.POST:
+            course_id = request.POST['delete_course']
+            courses = Courses.objects.filter(id=course_id)
+            if courses:
+                courses[0].delete()
     return render (request, "courses.html", { "courses": Courses.objects.all(), "form": AddCourseForm })
 def donat(request):
     return render(request, 'donat.html')

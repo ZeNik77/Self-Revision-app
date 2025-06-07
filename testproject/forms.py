@@ -59,6 +59,6 @@ class AddCourseForm(forms.Form):
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'placeholder': 'Enter course description',
-            'rows': 4
+            'rows': 1
         })
     )
