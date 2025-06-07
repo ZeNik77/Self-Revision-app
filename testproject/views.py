@@ -19,6 +19,25 @@ def signup(request):
             # user.save()
             form.save()
             return redirect(reverse('index'))
+        
         else:
             return render(request, 'signup.html', {'form': form})
     return render(request, 'signup.html', {'form': SignUpForm})
+
+# Вот кому-то делать нехуй
+
+def printAllUsers():
+    for el in User.objects.all():
+        print(el.username)
+def testUser():
+    testUser = User.objects.get(username='test')
+    if testUser:
+        print('User \'test\' exists')
+    else: print('nah')
+def superUsers():
+    su = User.objects.filter(is_superuser=True)
+    if not su:
+        print("no super users")
+    else:
+        for el in su:
+            print(el.username)
