@@ -21,6 +21,7 @@ def signup(request):
                 user_id = User.objects.all().last().user_id + 1
             user.user_id = user_id
             user.save()
+            auth.login(request, user)
             return redirect(reverse('index'))
         
         else:
