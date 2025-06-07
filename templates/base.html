@@ -1,5 +1,17 @@
 <!doctype html>
 <html lang="en">
+<style>
+  .glow-btn {
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 0 10px rgba(255,193,7, 0.4);
+  }
+
+  .glow-btn:hover {
+    box-shadow: 0 0 20px rgba(255,193,7, 0.8);
+    transform: translateY(-2px) scale(1.03);
+    text-decoration: none;
+  }
+</style>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,12 +28,16 @@
         </a> 
         <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0"> 
           <li><a href="{% url 'index' %}" class="nav-link px-2 text-secondary">Home</a></li>
-          <li><a href="#" class="nav-link px-2 text-white">Features</a></li>
-          <li><a href="#" class="nav-link px-2 text-white">Pricing</a></li>
-          <li><a href="#" class="nav-link px-2 text-white">FAQs</a></li>
-          <li><a href="#" class="nav-link px-2 text-white">About</a></li>
+
+          <li>
+          <a href="{% url 'donat' %}" class="btn btn-warning fw-bold rounded-pill px-4 py-1 shadow-sm glow-btn">
+            💖 Donate
+          </a>
+        </li>
+        
           {% if user.is_authenticated %}
           <li><a href="{% url 'courses' %}" class="nav-link px-2 text-white">Courses</a></li>
+          
           {% endif %}
         </ul> 
         <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">

@@ -67,3 +67,5 @@ def courses (request):
         else:
             print(form.errors)
     return render (request, "courses.html", { "courses": Courses.objects.all(), "form": AddCourseForm })
+def donat(request):
+    return render(request, 'donat.html')
