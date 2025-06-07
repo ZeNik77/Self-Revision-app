@@ -14,11 +14,13 @@ def signup(request):
     if request.method == 'POST':
         form = SignUpForm(data=request.POST)
         if form.is_valid():
-            # На будущее - если захотим мб больше полей менять
-            # user = form.save()
-            # user.set_password(form.cleaned_data['field228'])
-            # user.save()
-            form.save()
+            user = form.save()
+            if len(User.objects.all()) == 0:
+                user_id = 1
+            else:
+                user_id = User.objects.all().last().user_id + 1
+            user.user_id = user_id
+            user.save()
             return redirect(reverse('index'))
         
         else:
@@ -65,7 +67,11 @@ def courses (request):
             if form.is_valid():
                 name = form.cleaned_data['name']
                 desc = form.cleaned_data['description']
-                Courses.objects.create(name=name, description=desc)
+                if len(Courses.objects.all()) == 0:
+                    course_id = 0
+                else:
+                    course_id = Courses.objects.all().last().course_id + 1
+                Courses.objects.create(name=name, description=desc, user_id=auth.get_user(request).user_id, course_id=course_id)
             else:
                 print(form.errors)
         if 'edit_course' in request.POST:
@@ -83,6 +89,6 @@ def courses (request):
             courses = Courses.objects.filter(id=course_id)
             if courses:
                 courses[0].delete()
-    return render (request, "courses.html", { "courses": Courses.objects.all(), "form": AddCourseForm })
+    return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
 def donat(request):
     return render(request, 'donat.html')
