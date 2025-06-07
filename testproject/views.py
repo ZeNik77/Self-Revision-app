@@ -36,6 +36,10 @@ def login(request):
             return redirect(reverse('index'))
     return render(request, 'login.html', {'form': LoginForm})
 
+def logout(request):
+    auth.logout(request)
+    return redirect(reverse('index'))
+
 # Вот кому-то делать нехуй
 
 def printAllUsers():
