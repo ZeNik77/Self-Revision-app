@@ -6,3 +6,7 @@ class User(AbstractUser):
     # password = models.CharField()
     # bio = models.TextField()
     intField = models.IntegerField(default=0)
+
+class Courses(models.Model):
+    name = models.CharField()
+    description = models.TextField()

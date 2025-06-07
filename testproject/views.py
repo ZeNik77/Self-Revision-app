@@ -4,8 +4,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm
-from .models import User
+from .forms import SignUpForm, LoginForm, AddCourseForm
+from .models import User, Courses
 
 def index(request):
     return render(request, 'index.html')
@@ -56,3 +56,14 @@ def superUsers():
         print(el.username)
     else:
         print('No super users')
+
+def courses (request):
+    if request.method == "POST":
+        form = AddCourseForm(data=request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            desc = form.cleaned_data['description']
+            Courses.objects.create(name=name, description=desc)
+        else:
+            print(form.errors)
+    return render (request, "courses.html", { "courses": Courses.objects.all(), "form": AddCourseForm })

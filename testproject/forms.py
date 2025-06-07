@@ -42,3 +42,23 @@ class LoginForm(AuthenticationForm):
     class Meta:
         model = User
         fields = ('username',)
+
+class AddCourseForm(forms.Form):
+    name = forms.CharField(
+        label="Course Name",
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter course name'
+        })
+    )
+
+    description = forms.CharField(
+        label="Description",
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter course description',
+            'rows': 4
+        })
+    )
