@@ -1,9 +1,10 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm
+from .forms import SignUpForm, LoginForm
 from .models import User
 
 def index(request):
@@ -24,6 +25,17 @@ def signup(request):
             return render(request, 'signup.html', {'form': form})
     return render(request, 'signup.html', {'form': SignUpForm})
 
+def login(request):
+    form = LoginForm(data=request.POST)
+    if form.is_valid():
+        username = form.cleaned_data['username']
+        password = form.cleaned_data['password']
+        user = auth.authenticate(username=username, password=password)
+        if user:
+            auth.login(request, user)
+            return redirect(reverse('index'))
+    return render(request, 'login.html', {'form': LoginForm})
+
 # Вот кому-то делать нехуй
 
 def printAllUsers():
@@ -36,8 +48,7 @@ def testUser():
     else: print('nah')
 def superUsers():
     su = User.objects.filter(is_superuser=True)
-    if not su:
-        print("no super users")
+    for el in su:
+        print(el.username)
     else:
-        for el in su:
-            print(el.username)
+        print('No super users')
