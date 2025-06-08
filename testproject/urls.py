@@ -26,4 +26,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('courses/', views.courses, name='courses'),
     path('donat/', views.donat, name='donat'),
+    path('course/', views.course, name='course'),
+    path('ajax/', views.ajax_view, name='ajax'),
 ]

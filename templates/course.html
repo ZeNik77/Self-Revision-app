@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Ajax with Django</h1>
+    
+    <form id="myForm">
+        <input type="text" id="nameInput" name="name" placeholder="Enter your name">
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="responseMessage"></div>
+</div>
+
+<script>
+    // Ajax setup for form submission
+    $(document).ready(function() {
+        $('#myForm').on('submit', function(event) {
+            event.preventDefault();
+            
+            $.ajax({
+                url: '{% url "ajax" %}',  // The URL of the Django view that handles the request
+                type: 'POST',
+                data: {
+                    'name': $('#nameInput').val(),
+                    'csrfmiddlewaretoken': '{{ csrf_token }}' // CSRF token for security
+                },
+                success: function(response) {
+                    $('#responseMessage').text(response.message);  // Update the page dynamically
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

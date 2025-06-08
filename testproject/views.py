@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import auth
@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm
 from .models import User, Courses
+import asyncio
 
 def index(request):
     return render(request, 'index.html')
@@ -93,3 +94,13 @@ def courses (request):
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
 def donat(request):
     return render(request, 'donat.html')
+def course(request):
+    return render(request, 'course.html')
+async def ajax_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        message = f'Welcome back, {name}!'
+        print(message)
+        await asyncio.sleep(3)
+        return JsonResponse({'message': message})
+    return JsonResponse({'message': 'Invalid request'})
