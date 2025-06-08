@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm
 from .models import User, Courses
+from g4f.client import Client
 import asyncio
 
 def index(request):
@@ -96,11 +97,23 @@ def donat(request):
     return render(request, 'donat.html')
 def course(request):
     return render(request, 'course.html')
-async def ajax_view(request):
+async def chatGPT(input):
+    client = Client()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "user",
+                "content": input
+            }
+        ],
+        web_search = False
+    )
+    return response
+async def sendMessage(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        message = f'Welcome back, {name}!'
-        print(message)
-        await asyncio.sleep(3)
-        return JsonResponse({'message': message})
+        input = request.POST.get('input')
+        response = await chatGPT(input)
+        return JsonResponse({'message': response.choices[0].message.content})
     return JsonResponse({'message': 'Invalid request'})
