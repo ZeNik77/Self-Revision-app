@@ -97,16 +97,16 @@ def donat(request):
     return render(request, 'donat.html')
 def course(request):
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
-    return render(request, 'course.html', {'topic': gradient_summary})
-async def chatGPT(input):
+    return render(request, 'course.html', {'course': 'Матанализ', 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+async def chatGPT(input, course, topic_name, topic_description):
     client = Client()
-
+    content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
-                "content": input
+                "content": content
             }
         ],
         web_search = False
@@ -115,6 +115,9 @@ async def chatGPT(input):
 async def sendMessage(request):
     if request.method == 'POST':
         input = request.POST.get('input')
-        response = await chatGPT(input)
+        course = request.POST.get('course')
+        topic_name = request.POST.get('topic_name')
+        topic_description = request.POST.get('topic_description')
+        response = await chatGPT(input, course, topic_name, topic_description)
         return JsonResponse({'message': response.choices[0].message.content})
     return JsonResponse({'message': 'Invalid request'})
