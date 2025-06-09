@@ -96,7 +96,8 @@ def courses (request):
 def donat(request):
     return render(request, 'donat.html')
 def course(request):
-    return render(request, 'course.html')
+    gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
+    return render(request, 'course.html', {'topic': gradient_summary})
 async def chatGPT(input):
     client = Client()
 
