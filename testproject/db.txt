@@ -1,0 +1,50 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' User model
+class User {
+  +user_id : int [PK]
+  +username : string
+  +email : string
+  +password : string
+}
+
+' Courses model
+class Courses {
+  +course_id : int [PK]
+  +name : string
+  +description : text
+  +user_id : int [FK to User]
+}
+
+' Topic model
+class Topic {
+  +topic_id : int [PK]
+  +name : string
+  +description : text
+  +course_id : int [FK to Courses]
+  +user_id : int [FK to User]
+}
+
+' Test model
+class Test {
+  +test_id : int [PK]
+  +type : {"topic", "course"}
+  +topic_id : int [FK to Topic, optional]
+  +course_id : int [FK to Courses, optional]
+  +user_id : int [FK to User]
+  +name : string
+  +questions : text
+}
+
+' Relationships with multiplicity
+User "1" --> "0..*" Courses : owns
+User "1" --> "0..*" Topic : creates
+User "1" --> "0..*" Test : creates
+
+Courses "1" --> "1..*" Topic : contains
+Courses "1" --> "0..*" Test : test of
+
+Topic "1" --> "0..*" Test : test of
+
+@enduml
