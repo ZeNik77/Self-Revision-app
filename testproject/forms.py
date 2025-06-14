@@ -62,3 +62,31 @@ class AddCourseForm(forms.Form):
             'rows': 1
         })
     )
+
+class AIForm(forms.Form):
+    prompt = forms.CharField(
+        label="Your Prompt",
+        widget=forms.Textarea(
+            attrs={
+                "id": "aiInput",
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Ask the AI anything..."
+            }
+        )
+    )
+    file = forms.FileField(
+        label="Upload File",
+        required=False,
+        # max_size=5*1024*1024,
+        # allowed_extensions=['pdf', 'docx', 'txt'],
+        widget=forms.ClearableFileInput(
+            attrs={
+                "id": "fileInput",
+                "class": "form-control",
+            }
+        )
+    )
+    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'd-none'}))
+    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'd-none'}))
+    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'd-none'}))

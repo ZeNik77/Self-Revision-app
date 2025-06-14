@@ -4,7 +4,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
 from .models import User, Courses
 from g4f.client import Client
 import asyncio
@@ -97,10 +97,12 @@ def donat(request):
     return render(request, 'donat.html')
 def course(request):
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
-    return render(request, 'course.html', {'course': 'Матанализ', 'topic_name': 'Градиент', 'topic_description': gradient_summary})
-async def chatGPT(input, course, topic_name, topic_description):
+    return render(request, 'course.html', {'form': AIForm, 'course': 'Матанализ', 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+async def chatGPT(input, course, topic_name, topic_description, fileText):
     client = Client()
     content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
+    if fileText:
+        content = 'Вместе с данными из файла, ' + fileText + ',' + content
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -114,10 +116,21 @@ async def chatGPT(input, course, topic_name, topic_description):
     return response
 async def sendMessage(request):
     if request.method == 'POST':
-        input = request.POST.get('input')
-        course = request.POST.get('course')
-        topic_name = request.POST.get('topic_name')
-        topic_description = request.POST.get('topic_description')
-        response = await chatGPT(input, course, topic_name, topic_description)
-        return JsonResponse({'message': response.choices[0].message.content})
+        form = AIForm(request.POST, request.FILES)
+        if form.is_valid():
+            input = form.cleaned_data['prompt']
+            course = form.cleaned_data['course']
+            topic_name = form.cleaned_data['topic_name']
+            topic_description = form.cleaned_data['topic_description']
+            if form.cleaned_data['file']:
+                fileText = ''
+                uploaded_file = form.cleaned_data['file']
+                for chunk in uploaded_file.chunks():
+                    fileText += chunk.decode('utf-8')
+            else:
+                fileText = ''
+            response = await chatGPT(input, course, topic_name, topic_description, fileText)
+            return JsonResponse({'message': response.choices[0].message.content})
+        else:
+            return JsonResponse({'message': form.errors})
     return JsonResponse({'message': 'Invalid request'})
