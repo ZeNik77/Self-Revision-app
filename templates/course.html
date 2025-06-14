@@ -26,6 +26,12 @@
       {{ form.non_field_errors }}
       {{ form.prompt.label_tag }}
       {{ form.prompt }}
+      <div class="form-check form-switch mb-3">
+        {{ form.internet_toggle }}
+        <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+          {{ form.internet_toggle.label }}
+        </label>
+      </div>
       {{ form.file.label_tag }}
       {{ form.file }}
       {{ form.course }}
@@ -56,6 +62,7 @@
             $('#topic_descriptionText').val('{{ topic_description }}')
             formData = new FormData(this);
             $('#loadingText').removeClass('d-none');
+            console.log(formData.get('internet_toggle'))
             $.ajax({
                 url: '{% url "sendMessage" %}',
                 type: 'POST',

@@ -87,6 +87,16 @@ class AIForm(forms.Form):
             }
         )
     )
+    internet_toggle = forms.BooleanField(
+        label="Поиск 🔍",
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'role': 'switch',
+            'data-toggle': 'toggle',
+            'id': 'internetToggle'
+        })
+    )
     course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'd-none'}))
     topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'd-none'}))
     topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'd-none'}))

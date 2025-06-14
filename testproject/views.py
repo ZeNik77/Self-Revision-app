@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
 from .models import User, Courses
 from g4f.client import Client
+from g4f.gui.server.internet import get_search_message
 import asyncio
 
 def index(request):
@@ -98,21 +99,40 @@ def donat(request):
 def course(request):
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
     return render(request, 'course.html', {'form': AIForm, 'course': 'Матанализ', 'topic_name': 'Градиент', 'topic_description': gradient_summary})
-async def chatGPT(input, course, topic_name, topic_description, fileText):
+async def chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText):
     client = Client()
     content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
+    # content = input
     if fileText:
         content = 'Вместе с данными из файла, ' + fileText + ',' + content
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "user",
-                "content": content
-            }
-        ],
-        web_search = False
-    )
+    if not internet_toggle:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ],
+            web_search = False
+        )
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor() as executor:
+            content = await asyncio.get_event_loop().run_in_executor(
+                executor,
+                lambda: (get_search_message(content))
+        )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": content + "Ни в коем случае не забудь вывести источники!!"
+                }
+            ],
+            web_search = True
+        )
     return response
 async def sendMessage(request):
     if request.method == 'POST':
@@ -122,6 +142,7 @@ async def sendMessage(request):
             course = form.cleaned_data['course']
             topic_name = form.cleaned_data['topic_name']
             topic_description = form.cleaned_data['topic_description']
+            internet_toggle = form.cleaned_data['internet_toggle']
             if form.cleaned_data['file']:
                 fileText = ''
                 uploaded_file = form.cleaned_data['file']
@@ -129,7 +150,7 @@ async def sendMessage(request):
                     fileText += chunk.decode('utf-8')
             else:
                 fileText = ''
-            response = await chatGPT(input, course, topic_name, topic_description, fileText)
+            response = await chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText)
             return JsonResponse({'message': response.choices[0].message.content})
         else:
             return JsonResponse({'message': form.errors})
