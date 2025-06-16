@@ -45,7 +45,7 @@
         {% for c in courses %}
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
-                <a href="{% url 'course' %}" class="nav-link text-white">
+                <a href="{% url 'course' c.course_id %}" class="nav-link text-white">
                 <!-- Card Header -->
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <!-- Static course title -->

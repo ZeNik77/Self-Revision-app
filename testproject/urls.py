@@ -26,6 +26,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('courses/', views.courses, name='courses'),
     path('donat/', views.donat, name='donat'),
-    path('course/', views.course, name='course'),
+    path('courses/<int:course_id>', views.course, name='course'),
     path('sendMessage_ajax/', views.sendMessage, name='sendMessage'),
 ]

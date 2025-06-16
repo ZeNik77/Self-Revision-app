@@ -8,6 +8,7 @@ from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
 from .models import User, Courses
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
+import random
 import asyncio
 
 def index(request):
@@ -71,10 +72,13 @@ def courses (request):
             if form.is_valid():
                 name = form.cleaned_data['name']
                 desc = form.cleaned_data['description']
-                if len(Courses.objects.all()) == 0:
-                    course_id = 0
-                else:
-                    course_id = Courses.objects.all().last().course_id + 1
+                # if len(Courses.objects.all()) == 0:
+                #     course_id = 0
+                # else:
+                #     course_id = Courses.objects.all().last().course_id + 1
+                course_id = random.randint(2, 10000000000)
+                while Courses.objects.filter(course_id=course_id).exists():
+                    course_id = random.randint(2, 10000000000)
                 Courses.objects.create(name=name, description=desc, user_id=auth.get_user(request).user_id, course_id=course_id)
             else:
                 print(form.errors)
@@ -96,9 +100,15 @@ def courses (request):
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
 def donat(request):
     return render(request, 'donat.html')
-def course(request):
+def course(request, course_id):
+    if Courses.objects.filter(course_id=course_id).exists():
+        course = Courses.objects.get(course_id=course_id)
+    else:
+        return redirect(reverse('courses'))
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
-    return render(request, 'course.html', {'form': AIForm, 'course': 'Матанализ', 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+    return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+
+
 async def chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText):
     client = Client()
     content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
