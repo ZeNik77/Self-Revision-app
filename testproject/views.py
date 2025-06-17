@@ -23,7 +23,7 @@ def index(request):
                     auth.login(request, user)
                     return redirect(reverse('index'))
             else:
-                return render(request, 'index.html', {'login_form': form, 'register_form': SignUpForm})
+                return render(request, 'index2.html', {'login_form': form, 'register_form': SignUpForm})
         elif 'register' in request.POST:
             form = SignUpForm(data=request.POST)
             if form.is_valid():
@@ -37,8 +37,8 @@ def index(request):
                 auth.login(request, user)
                 return redirect(reverse('index'))
             else:
-                return render(request, 'index.html', {'login_form': LoginForm, 'register_form': form})  
-    return render(request, 'index.html', {'login_form': LoginForm, 'register_form': SignUpForm})
+                return render(request, 'index2.html', {'login_form': LoginForm, 'register_form': form})  
+    return render(request, 'index2.html', {'login_form': LoginForm, 'register_form': SignUpForm})
 
 def signup(request):
     if request.method == 'POST':

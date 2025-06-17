@@ -1,5 +1,15 @@
-{% extends 'base.html' %}
+{% extends 'base2.html' %}
+{% load static %}
+
 {% block head %}
 <title>Self-Revision App</title>
+
+<!-- CSS Files -->
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
 {% endblock %}
-{% block content %}{% endblock %}
+
+{% block content %}
+<!-- JavaScript Files -->
+<script src="{% static 'js/index.js' %}"></script>
+<script src="https://unpkg.com/ionicons@4.1.2/dist/ionicons.js"></script>
+{% endblock %}

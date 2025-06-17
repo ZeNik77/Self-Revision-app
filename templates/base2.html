@@ -29,7 +29,7 @@
 
           <a href="{% url 'donat' %}">About</a>
 
-          {% if user.is_authenticated %}
+          {% if not user.is_authenticated %}
           <button class="btnLogin-popup">Login</button>
           {% else %}
           <a href="{% url 'courses' %}">Courses</a>
@@ -51,15 +51,15 @@
                 {{ login_form.non_field_errors }}
                 <div class="input-box">
                     <span class="icon"><ion-icon name="mail"></ion-icon></span>
-                    <input type="text" class="username" required>
-                    <label>Username</label>
+                    <!-- <input type="text" class="username" required>
+                    <label>Username</label> -->
                     {{ login_form.username }}
                     {{ login_form.username.label }}
                 </div>
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" class="password" required>
-                    <label>Password</label>
+                    <!-- <input type="password" class="password" required>
+                    <label>Password</label> -->
                     {{ login_form.password }}
                     {{ login_form.password.label }}
                 </div>
@@ -79,26 +79,34 @@
         <!-- Registration Form -->
         <div class="form-box register">
             <h2>Registration</h2>
-            <form action="#">
+            <form method="POST">
+                {% csrf_token %}
+                {{ register_form.non_field_errors }}
                 <div class="input-box">
                     <span class="icon"><ion-icon name="person"></ion-icon></span>
-                    <input type="text" class="email" required>
-                    <label>Username</label>
-                </div>
-                <div class="input-box">
-                    <span class="icon"><ion-icon name="mail"></ion-icon></span>
-                    <input type="text" class="email" required>
-                    <label>Email</label>
+                    <!-- <input type="text" class="email" required>
+                    <label>Username</label> -->
+                    {{ register_form.username }}
+                    {{ register_form.username.label }}
                 </div>
                 <div class="input-box">
                     <span class="icon"><ion-icon name="lock"></ion-icon></span>
-                    <input type="password" class="password" required>
-                    <label>Password</label>
+                    <!-- <input type="password" class="password" required>
+                    <label>Password</label> -->
+                    {{ register_form.password1 }}
+                    {{ register_form.password1.label }}
                 </div>
-                <div class="remember-forgot">
+                <div class="input-box">
+                    <span class="icon"><ion-icon name="lock"></ion-icon></span>
+                    <!-- <input type="password" class="password" required>
+                    <label>Password</label> -->
+                    {{ register_form.password2 }}
+                    {{ register_form.password2.label }}
+                </div>
+                <!-- <div class="remember-forgot">
                     <label><input type="checkbox">I agree to the terms & conditions</label>
-                </div>
-                <button type="submit" class="btn">Register</button>
+                </div> -->
+                <button type="submit" name="register" class="btn">Register</button>
                 <div class="login-register">
                     <p>Already have an account? <a href="#" class="login-link">Login</a></p>
                 </div>
@@ -107,10 +115,5 @@
     </div>
 
     {% block content %}{% endblock %}
-
-    <!-- JavaScript Files -->
-    <script src="{% static 'js/index.js' %}"></script>
-    <script src="https://unpkg.com/ionicons@4.1.2/dist/ionicons.js"></script>
-
 </body>
 </html>
