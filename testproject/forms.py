@@ -5,21 +5,20 @@ from .models import User
 class SignUpForm(UserCreationForm):
     username = forms.CharField(
         label='Username',
-        max_length=254,
+        max_length=20,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter username',
+            'class': 'email',
             'id': 'username'
         })
     )
     password1 = forms.CharField(
         label='Password',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter password', 'id': 'password1'})
+        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'password1'})
     )
 
     password2 = forms.CharField(
         label='Confirm Password',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm password', 'id': 'password2'})
+        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'password2'})
     )
     class Meta:
         model = User
