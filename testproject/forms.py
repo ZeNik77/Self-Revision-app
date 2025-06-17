@@ -8,17 +8,17 @@ class SignUpForm(UserCreationForm):
         max_length=20,
         widget=forms.TextInput(attrs={
             'class': 'email',
-            'id': 'username'
+            'id': 'signup_username'
         })
     )
     password1 = forms.CharField(
         label='Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'password1'})
+        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'signup_password1'})
     )
 
     password2 = forms.CharField(
         label='Confirm Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'password2'})
+        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'signup_password2'})
     )
     class Meta:
         model = User
@@ -31,12 +31,12 @@ class LoginForm(AuthenticationForm):
         widget=forms.TextInput(attrs={
             'class': 'email',
             # 'placeholder': 'Enter username',
-            'id': 'username'
+            'id': 'login_username'
         })
     )
     password = forms.CharField(
         label='Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'password1'})
+        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'login_password1'})
     )
     class Meta:
         model = User
