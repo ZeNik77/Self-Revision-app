@@ -124,6 +124,11 @@ def courses (request):
             if courses:
                 courses[0].delete()
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
+
+# TODO: Delete this one (just for testing)
+def courses2(request):
+    return render(request, 'courses2.html')
+
 def donat(request):
     return render(request, 'donat.html')
 def course(request, course_id):
