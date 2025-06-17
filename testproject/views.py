@@ -12,7 +12,17 @@ import random
 import asyncio
 
 def index(request):
-    return render(request, 'index2.html')
+    if request.method == 'POST':
+        if 'login' in request.POST:
+            form = LoginForm(data=request.POST)
+            if form.is_valid():
+                username = form.cleaned_data['username']
+                password = form.cleaned_data['password']
+                user = auth.authenticate(username=username, password=password)
+                if user:
+                    auth.login(request, user)
+                    return redirect(reverse('index'))
+    return render(request, 'index2.html', {'login_form': LoginForm})
 
 def signup(request):
     if request.method == 'POST':
