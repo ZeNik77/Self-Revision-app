@@ -9,13 +9,13 @@ class User(AbstractUser):
 
 class Courses(models.Model):
     course_id = models.IntegerField()
-    name = models.CharField()
+    name = models.CharField(max_length=20)
     description = models.TextField()
     user_id = models.IntegerField()
 
 class Topic(models.Model):
     topic_id = models.IntegerField()
-    name = models.CharField()
+    name = models.CharField(max_length=30)
     description = models.TextField()
     course_id = models.IntegerField()
     user_id = models.IntegerField()
@@ -25,5 +25,5 @@ class Test(models.Model):
     topic_id = models.IntegerField(default=-1)
     course_id = models.IntegerField(default=-1)
     user_id = models.IntegerField()
-    name = models.CharField()
+    name = models.CharField(max_length=30)
     questions = models.TextField()

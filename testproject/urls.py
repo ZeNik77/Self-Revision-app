@@ -28,4 +28,5 @@ urlpatterns = [
     path('donat/', views.donat, name='donat'),
     path('courses/<int:course_id>', views.course, name='course'),
     path('sendMessage_ajax/', views.sendMessage, name='sendMessage'),
+    
 ]

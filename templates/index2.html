@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self-Revision App</title>
-    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
 </head>
 <body>
     <header>
@@ -74,7 +75,7 @@
         </div>
     </div>
 
-    <script src="../js/index.js"></script>
+    <script src="{% static 'js/index.js' %}"></script>
     <script src="https://unpkg.com/ionicons@4.1.2/dist/ionicons.js"></script>
 </body>
 </html>

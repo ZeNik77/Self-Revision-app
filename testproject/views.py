@@ -12,7 +12,7 @@ import random
 import asyncio
 
 def index(request):
-    return render(request, 'index.html')
+    return render(request, 'index2.html')
 
 def signup(request):
     if request.method == 'POST':
