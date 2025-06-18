@@ -2,41 +2,60 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, UserChangeForm
 from .models import User
 
-class SignUpForm(UserCreationForm):
+class SignUpForm(forms.ModelForm):
+    # username form
     username = forms.CharField(
         label='Username',
-        max_length=20,
+        max_length=32,
         widget=forms.TextInput(attrs={
-            'class': 'email',
+            'class': 'username',
             'id': 'signup_username'
         })
     )
+
+    # password form
     password1 = forms.CharField(
         label='Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'signup_password1'})
+        min_length=5,
+        widget=forms.PasswordInput(attrs={
+            'class': 'password',
+            'id': 'signup_password1'
+        })
     )
 
+    # confirm_password form
     password2 = forms.CharField(
         label='Confirm Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'signup_password2'})
+        min_length=5,
+        widget=forms.PasswordInput(attrs={
+            'class': 'password',
+            'id': 'signup_password2'
+        })
     )
+
     class Meta:
         model = User
         fields = ('username',)
 
 class LoginForm(AuthenticationForm):
+    # username form
     username = forms.CharField(
-        label='Username',
-        max_length=254,
+        label='username',
+        max_length=32,
         widget=forms.TextInput(attrs={
-            'class': 'email',
-            # 'placeholder': 'Enter username',
+            'class': 'username',
             'id': 'login_username'
         })
     )
+
+    # password form
     password = forms.CharField(
-        label='Password',
-        widget=forms.PasswordInput(attrs={'class': 'password', 'id': 'login_password1'})
+        label='password',
+        min_length=5,
+        widget=forms.PasswordInput(attrs={
+            'class': 'password',
+            'id': 'login_password'
+        })
     )
     class Meta:
         model = User

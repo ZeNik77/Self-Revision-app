@@ -12,62 +12,62 @@ import random
 import asyncio
 
 def index(request):
+    # processing POST request
     if request.method == 'POST':
         if 'login' in request.POST:
-            form = LoginForm(data=request.POST)
-            if form.is_valid():
-                username = form.cleaned_data['username']
-                password = form.cleaned_data['password']
-                user = auth.authenticate(username=username, password=password)
-                if user:
-                    auth.login(request, user)
-                    return redirect(reverse('index'))
-            else:
-                return render(request, 'index2.html', {'login_form': form, 'register_form': SignUpForm})
+            login(request)
         elif 'register' in request.POST:
-            form = SignUpForm(data=request.POST)
-            if form.is_valid():
-                if len(User.objects.all()) == 0:
-                    user_id = 1
-                else:
-                    user_id = User.objects.all().last().user_id + 1
-                user = form.save()
-                user.user_id = user_id
-                user.save()
-                auth.login(request, user)
-                return redirect(reverse('index'))
-            else:
-                return render(request, 'index2.html', {'login_form': LoginForm, 'register_form': form})  
-    return render(request, 'index2.html', {'login_form': LoginForm, 'register_form': SignUpForm})
+            signup(request)
+
+    # processing GET request
+
+    return render(request, 'index2.html', {'login_form': LoginForm, 'signup_form': SignUpForm})
 
 def signup(request):
-    if request.method == 'POST':
-        form = SignUpForm(data=request.POST)
-        if form.is_valid():
-            if len(User.objects.all()) == 0:
-                user_id = 1
-            else:
-                user_id = User.objects.all().last().user_id + 1
-            user = form.save()
-            user.user_id = user_id
-            user.save()
-            auth.login(request, user)
-            return redirect(reverse('index'))
-        
+    signup_form = SignUpForm(data = request.POST)
+
+    if signup_form.is_valid():
+
+        # assigning in id for user
+        if len(User.objects.all()) == 0:
+            user_id = 1
         else:
-            return render(request, 'signup.html', {'form': form})
-    return render(request, 'signup.html', {'form': SignUpForm})
+            user_id = User.objects.all().last().user_id + 1
+
+        # creatig new user
+        user = signup_form.save()
+        user.user_id = user_id
+        user.save()
+
+        # login into an account
+        auth.login(request, user)
+        
+        return redirect(reverse('index'))
+    
+    # if we do not succeed with registration than return main page
+    else:
+        return render(request, 'index.html', {'signup_form': signup_form})
+
 
 def login(request):
-    form = LoginForm(data=request.POST)
-    if form.is_valid():
-        username = form.cleaned_data['username']
-        password = form.cleaned_data['password']
+    # getting data from login_form
+    login_form = LoginForm(data = request.POST)
+    print(login_form)
+
+    # trying to authenticate
+    if login_form.is_valid():
+        username = login_form.cleaned_data['username']
+        password = login_form.cleaned_data['password']
+
         user = auth.authenticate(username=username, password=password)
+
+        # if such user exists than authenticate
         if user:
             auth.login(request, user)
             return redirect(reverse('index'))
-    return render(request, 'login.html', {'form': LoginForm})
+    
+    # if authentication failed than hust return main page
+    return render(request, 'index.html', {'login_form': LoginForm})
 
 def logout(request):
     auth.logout(request)
@@ -79,11 +79,13 @@ def logout(request):
 def printAllUsers():
     for el in User.objects.all():
         print(el.username)
+
 def testUser():
     testUser = User.objects.get(username='test')
     if testUser:
         print('User \'test\' exists')
     else: print('nah')
+
 def superUsers():
     su = User.objects.filter(is_superuser=True)
     for el in su:

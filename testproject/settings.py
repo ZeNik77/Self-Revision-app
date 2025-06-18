@@ -52,6 +52,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# I've added this one to update page on every action
+MIDDLEWARE_CLASSES = [
+    'livereload.middleware.LiveReloadScript',
+]
+
+# disable or enable caching (fake caching)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+#     }
+# }
+
 ROOT_URLCONF = 'testproject.urls'
 
 TEMPLATES = [
