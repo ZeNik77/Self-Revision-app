@@ -21,7 +21,7 @@ def index(request):
             signup(request)
 
     # redirecting to login page
-    return render(request, 'login.html', {'login_form': LoginForm})
+    return redirect(reverse(login))
 
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
