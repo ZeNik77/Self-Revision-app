@@ -13,18 +13,20 @@ import asyncio
 
 def index(request):
     # processing POST request
+
     if request.method == 'POST':
         if 'login' in request.POST:
             login(request)
         elif 'register' in request.POST:
             signup(request)
 
-    # processing GET request
-
-    return render(request, 'index2.html', {'login_form': LoginForm, 'signup_form': SignUpForm})
+    # redirecting to login page
+    return render(request, 'login.html', {'login_form': LoginForm})
 
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
+
+    print(signup_form)
 
     if signup_form.is_valid():
 
@@ -42,16 +44,17 @@ def signup(request):
         # login into an account
         auth.login(request, user)
         
-        return redirect(reverse('index'))
+        return redirect(reverse('courses'))
     
     # if we do not succeed with registration than return main page
     else:
-        return render(request, 'index.html', {'signup_form': signup_form})
+        return render(request, 'signup.html', {'signup_form' : SignUpForm})
 
 
 def login(request):
     # getting data from login_form
     login_form = LoginForm(data = request.POST)
+
     print(login_form)
 
     # trying to authenticate
@@ -61,13 +64,15 @@ def login(request):
 
         user = auth.authenticate(username=username, password=password)
 
+        print(user)
+
         # if such user exists than authenticate
         if user:
             auth.login(request, user)
-            return redirect(reverse('index'))
+            return redirect(reverse('courses'))
     
     # if authentication failed than hust return main page
-    return render(request, 'index.html', {'login_form': LoginForm})
+    return render(request, 'login.html', {'login_form': LoginForm})
 
 def logout(request):
     auth.logout(request)

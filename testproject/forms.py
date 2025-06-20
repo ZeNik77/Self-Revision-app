@@ -2,13 +2,13 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, UserChangeForm
 from .models import User
 
-class SignUpForm(forms.ModelForm):
+class SignUpForm(UserCreationForm):
     # username form
     username = forms.CharField(
         label='Username',
         max_length=32,
         widget=forms.TextInput(attrs={
-            'class': 'username',
+            'class': 'input-field',
             'id': 'signup_username'
         })
     )
@@ -16,9 +16,8 @@ class SignUpForm(forms.ModelForm):
     # password form
     password1 = forms.CharField(
         label='Password',
-        min_length=5,
         widget=forms.PasswordInput(attrs={
-            'class': 'password',
+            'class': 'input-field',
             'id': 'signup_password1'
         })
     )
@@ -26,9 +25,8 @@ class SignUpForm(forms.ModelForm):
     # confirm_password form
     password2 = forms.CharField(
         label='Confirm Password',
-        min_length=5,
         widget=forms.PasswordInput(attrs={
-            'class': 'password',
+            'class': 'input-field',
             'id': 'signup_password2'
         })
     )
@@ -40,21 +38,20 @@ class SignUpForm(forms.ModelForm):
 class LoginForm(AuthenticationForm):
     # username form
     username = forms.CharField(
-        label='username',
+        label='Username',
         max_length=32,
         widget=forms.TextInput(attrs={
-            'class': 'username',
+            'class': 'input-field',
             'id': 'login_username'
         })
     )
 
     # password form
     password = forms.CharField(
-        label='password',
-        min_length=5,
+        label='Password',
         widget=forms.PasswordInput(attrs={
-            'class': 'password',
-            'id': 'login_password'
+            'class': 'input-field',
+            'id': 'login_password1'
         })
     )
     class Meta:

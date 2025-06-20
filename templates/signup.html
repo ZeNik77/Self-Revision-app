@@ -1,36 +1,84 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   
+    <title>Login</title>
 
-{% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Sign up</h2>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
+    <!-- styles import  -->
+    <link rel="stylesheet" href="{% static './css/signup.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dongle:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="wrapper">
+        <form class="register-box" action="#" method="POST">
+            {% csrf_token %}
+            {{ signup_form.non_field_errors }}
+            
+            <!-- box name  -->
+            <div class="text-container">
+                Registration
+            </div>
 
-        <div class="mb-3">
-            {{ form.username.label_tag }}
-            {{ form.username }}
-            {% if form.username.errors %}
-                <div class="text-danger">{{ form.username.errors.0 }}</div>
-            {% endif %}
+            <!-- Username form -->
+            <div class="input-box">
+                {{ signup_form.username }}
+                <!-- <input type="text" id="user" class="input-field" required> -->
+                <label for="user" class="label">Username</label>
+            </div>
+
+            <!-- Password form -->
+            <div class="input-box">
+                {{ signup_form.password1 }}
+                <!-- <input type="password" id="pass" class="input-field" required> -->
+                <label for="pass" class="label">Password</label>
+            </div>
+
+            <!-- Password Confirm form -->
+            <div class="input-box">
+                {{ signup_form.password2 }}
+                <!-- <input type="password" id="pass" class="input-field" required> -->
+                <label for="pass" class="label">Confirm password</label>
+            </div>
+
+            <!-- button for sent form to back-end -->
+            <div class="input-box">
+                <input type="submit" class="input-submit" value="Register">
+            </div>
+
+            <!-- if user do not have an account  -->
+            <div class="register">
+                <span> Already have an account? <a href="/login">Login</a></span>
+            </div>
         </div>
+    </div>
 
-        <div class="mb-3">
-            {{ form.password1.label_tag }}
-            {{ form.password1 }}
-            {% if form.password1.errors %}
-                <div class="text-danger">{{ form.password1.errors.0 }}</div>
-            {% endif %}
+    <!-- background -->
+    <div class="gradient-bg">
+        <svg xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="goo">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8" result="goo" />
+                    <feBlend in="SourceGraphic" in2="goo" />
+                </filter>
+            </defs>
+        </svg>
+        <div class="gradients-container">
+            <div class="g1"></div>
+            <div class="g2"></div>
+            <div class="g3"></div>
+            <div class="g4"></div>
+            <div class="g5"></div>
+            <div class="interactive"></div>
         </div>
-        <div class="mb-3">
-            {{ form.password2.label_tag }}
-            {{ form.password2 }}
-            {% if form.password2.errors %}
-                <div class="text-danger">{{ form.password2.errors.0 }}</div>
-            {% endif %}
-        </div>
+    </div>
 
-        <button type="submit" class="btn btn-primary">Sign up</button>
-    </form>
-</div>
-{% endblock %}
+    <!-- JavaScript import  -->
+    <script type="text/javascript" src="{% static './js/signup.js' %}"></script>
+</body>
+</html>
