@@ -1,11 +1,10 @@
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
-from .models import User, Courses
+from .models import User, Courses, CourseChatHistory
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
 import random
@@ -130,7 +129,7 @@ def courses (request):
             courses = Courses.objects.filter(id=course_id)
             if courses:
                 courses[0].delete()
-    return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
+    return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm})
 
 # TODO: Delete this one (just for testing)
 def courses2(request):
@@ -144,16 +143,20 @@ def course(request, course_id):
     else:
         return redirect(reverse('courses'))
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
-    return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+    return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'course_id': course.course_id, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
 
 
-async def chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText):
+async def chatGPT(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     client = Client()
     content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
-    # content = input
     if fileText:
         content = 'Вместе с данными из файла, ' + fileText + ',' + content
+    try:
+        history = await CourseChatHistory.objects.aget(course_id=course_id)
+    except:
+        history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
     if not internet_toggle:
+        history.history.append({"role": "user", 'message': input, "content": content})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -171,16 +174,14 @@ async def chatGPT(input, course, topic_name, topic_description, internet_toggle,
                 executor,
                 lambda: (get_search_message(content))
         )
+        history.history.append({"role": "user", "content": content + "Ни в коем случае не забудь вывести источники!!"})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": content + "Ни в коем случае не забудь вывести источники!!"
-                }
-            ],
+            messages=history,
             web_search = True
         )
+    history.history.append({'role': 'assistant', 'message': input, 'content': response.choices[0].message.content})
+    await history.asave()
     return response
 async def sendMessage(request):
     if request.method == 'POST':
@@ -188,9 +189,11 @@ async def sendMessage(request):
         if form.is_valid():
             input = form.cleaned_data['prompt']
             course = form.cleaned_data['course']
+            course_id = form.cleaned_data['course_id']
             topic_name = form.cleaned_data['topic_name']
             topic_description = form.cleaned_data['topic_description']
             internet_toggle = form.cleaned_data['internet_toggle']
+            print(f'\n\n\n {course_id} \n\n\n')
             if form.cleaned_data['file']:
                 fileText = ''
                 uploaded_file = form.cleaned_data['file']
@@ -198,7 +201,7 @@ async def sendMessage(request):
                     fileText += chunk.decode('utf-8')
             else:
                 fileText = ''
-            response = await chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText)
+            response = await chatGPT(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
             return JsonResponse({'message': response.choices[0].message.content})
         else:
             return JsonResponse({'message': form.errors})
