@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import ArrayField
 
 class User(AbstractUser):
     # id = models.BigAutoField(primary_key=True)
@@ -27,3 +28,7 @@ class Test(models.Model):
     user_id = models.IntegerField()
     name = models.CharField(max_length=30)
     questions = models.TextField()
+
+class CourseChatHistory(models.Model):
+    course_id = models.IntegerField()
+    history = ArrayField(models.JSONField())

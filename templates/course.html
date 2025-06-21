@@ -35,6 +35,7 @@
       {{ form.file.label_tag }}
       {{ form.file }}
       {{ form.course }}
+      {{ form.course_id }}
       {{ form.topic_name }}
       {{ form.topic_description }}
     </div>
@@ -59,10 +60,10 @@
             event.preventDefault();
             $('#courseText').val('{{ course }}')
             $('#topic_nameText').val('{{ topic_name }}')
+            $('#course_idText').val('{{ course_id }}')
             $('#topic_descriptionText').val('{{ topic_description }}')
             formData = new FormData(this);
             $('#loadingText').removeClass('d-none');
-            console.log(formData.get('internet_toggle'))
             $.ajax({
                 url: '{% url "sendMessage" %}',
                 type: 'POST',
