@@ -187,7 +187,6 @@ async def sendMessage(request):
             topic_name = form.cleaned_data['topic_name']
             topic_description = form.cleaned_data['topic_description']
             internet_toggle = form.cleaned_data['internet_toggle']
-            print(f'\n\n\n {course_id} \n\n\n')
             if form.cleaned_data['file']:
                 fileText = ''
                 uploaded_file = form.cleaned_data['file']
