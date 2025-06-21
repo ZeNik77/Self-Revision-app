@@ -13,7 +13,6 @@ import asyncio
 
 def index(request):
     # processing POST request
-
     if request.method == 'POST':
         if 'login' in request.POST:
             login(request)
@@ -26,11 +25,9 @@ def index(request):
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
 
-    print(signup_form)
-
     if signup_form.is_valid():
 
-        # assigning in id for user
+        # assigning an id for user
         if len(User.objects.all()) == 0:
             user_id = 1
         else:
@@ -44,7 +41,7 @@ def signup(request):
         # login into an account
         auth.login(request, user)
         
-        return redirect(reverse('courses'))
+        return redirect(reverse('home'))
     
     # if we do not succeed with registration than return main page
     else:
@@ -55,8 +52,6 @@ def login(request):
     # getting data from login_form
     login_form = LoginForm(data = request.POST)
 
-    print(login_form)
-
     # trying to authenticate
     if login_form.is_valid():
         username = login_form.cleaned_data['username']
@@ -64,12 +59,10 @@ def login(request):
 
         user = auth.authenticate(username=username, password=password)
 
-        print(user)
-
         # if such user exists than authenticate
         if user:
             auth.login(request, user)
-            return redirect(reverse('courses'))
+            return redirect(reverse('home'))
     
     # if authentication failed than hust return main page
     return render(request, 'login.html', {'login_form': LoginForm})
@@ -132,10 +125,6 @@ def courses (request):
                 courses[0].delete()
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm })
 
-# TODO: Delete this one (just for testing)
-def courses2(request):
-    return render(request, 'courses2.html')
-
 def donat(request):
     return render(request, 'donat.html')
 def course(request, course_id):
@@ -146,6 +135,11 @@ def course(request, course_id):
     gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
     return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
 
+def home(request):
+    return render(request, 'home.html')
+
+def about(request):
+    return render(request, 'about.html')
 
 async def chatGPT(input, course, topic_name, topic_description, internet_toggle, fileText):
     client = Client()
