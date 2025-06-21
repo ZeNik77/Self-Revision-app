@@ -108,9 +108,9 @@ def courses (request):
                 #     course_id = 0
                 # else:
                 #     course_id = Courses.objects.all().last().course_id + 1
-                course_id = random.randint(2, 10000000000)
+                course_id = random.randint(2, 2147483646)
                 while Courses.objects.filter(course_id=course_id).exists():
-                    course_id = random.randint(2, 10000000000)
+                    course_id = random.randint(2, 2147483646)
                 Courses.objects.create(name=name, description=desc, user_id=auth.get_user(request).user_id, course_id=course_id)
             else:
                 print(form.errors)
@@ -174,13 +174,13 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
                 executor,
                 lambda: (get_search_message(content))
         )
-        history.history.append({"role": "user", "content": content + "Ни в коем случае не забудь вывести источники!!"})
+        history.history.append({"role": "user", 'message':input, "content": content + "Ни в коем случае не забудь вывести источники!!"})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=history,
             web_search = True
         )
-    history.history.append({'role': 'assistant', 'message': input, 'content': response.choices[0].message.content})
+    history.history.append({'role': 'assistant', 'message': response.choices[0].message.content, 'content': response.choices[0].message.content})
     await history.asave()
     return response
 async def sendMessage(request):

@@ -64,7 +64,6 @@
             $('#topic_descriptionText').val('{{ topic_description }}')
             formData = new FormData(this);
             $('#loadingText').removeClass('d-none');
-            console.log(formData.get('internet_toggle'))
             $.ajax({
                 url: '{% url "sendMessage" %}',
                 type: 'POST',

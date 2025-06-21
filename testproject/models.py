@@ -31,4 +31,4 @@ class Test(models.Model):
 
 class CourseChatHistory(models.Model):
     course_id = models.IntegerField()
-    history = ArrayField(models.TextField())
+    history = ArrayField(models.JSONField())
