@@ -153,12 +153,7 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
         history.history.append({"role": "user", 'message': input, "content": content})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
+            messages=history.history,
             web_search = False
         )
     else:
@@ -171,7 +166,7 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
         history.history.append({"role": "user", 'message':input, "content": content + "Ни в коем случае не забудь вывести источники!!"})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=history,
+            messages=history.history,
             web_search = True
         )
     history.history.append({'role': 'assistant', 'message': response.choices[0].message.content, 'content': response.choices[0].message.content})
