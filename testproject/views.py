@@ -19,7 +19,7 @@ def index(request):
             signup(request)
 
     # redirecting to login page
-    return redirect(reverse(login))
+    return redirect(reverse('login'))
 
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
