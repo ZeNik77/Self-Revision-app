@@ -21,17 +21,13 @@ class Topic(models.Model):
     course_id = models.IntegerField()
     user_id = models.IntegerField()
 class Test(models.Model):
-    type = {'topic', 'course'}
+    # type = {'topic', 'course'}
     test_id = models.IntegerField()
-    topic_id = models.IntegerField(default=-1)
-    course_id = models.IntegerField(default=-1)
+    topic_id = models.IntegerField()
+    course_id = models.IntegerField()
     user_id = models.IntegerField()
-    name = models.CharField(max_length=30)
-    questions = models.TextField()
+    questions = models.JSONField()
 
 class CourseChatHistory(models.Model):
     course_id = models.IntegerField()
     history = ArrayField(models.JSONField())
-
-class Topic(models.Model):
-    topic_name = models.CharField(max_length=128)
