@@ -229,5 +229,3 @@ def req():
     response = requests.post(url, headers=headers, json=data)
 
     return response.json()
-
-pprint(req())
