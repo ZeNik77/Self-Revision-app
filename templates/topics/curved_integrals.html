@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block head %}
+    <title>Криволинейные интегралы</title>
+    <link rel="stylesheet" href="{% static './css/topic.css' %}" class="">
+{% endblock %}
+{% block content %}
+    <h1>Криволинейные интегралы</h1>
+
+    <section>
+        <h2>1. Основные понятия</h2>
+        <p>Криволинейный интеграл — это интеграл, взятый вдоль кривой на плоскости или в пространстве. Существует два основных типа криволинейных интегралов:</p>
+        
+        <div class="types">
+            <div class="type-card">
+                <div class="type-title">Криволинейный интеграл первого рода</div>
+                <p>Интеграл от скалярной функции по длине дуги:</p>
+                <div class="formula">
+                    \[ \int_L f(x,y) ds \]
+                </div>
+                <p>Не зависит от направления обхода кривой.</p>
+            </div>
+            
+            <div class="type-card">
+                <div class="type-title">Криволинейный интеграл второго рода</div>
+                <p>Интеграл от векторной функции по координатам:</p>
+                <div class="formula">
+                    \[ \int_L Pdx + Qdy \]
+                </div>
+                <p>Зависит от направления обхода кривой.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Криволинейный интеграл первого рода</h2>
+        
+        <div class="important">
+            <p><strong>Определение:</strong></p>
+            <div class="formula">
+                \[ \int_L f(x,y) ds = \lim_{\max \Delta s_i \to 0} \sum_{i=1}^n f(x_i^*, y_i^*) \Delta s_i \]
+            </div>
+            <p>где \( \Delta s_i \) — длина малого участка кривой.</p>
+            
+            <p><strong>Вычисление:</strong></p>
+            <p>Если кривая задана параметрически: \( x = x(t) \), \( y = y(t) \), \( t \in [a,b] \), то:</p>
+            <div class="formula">
+                \[ \int_L f(x,y) ds = \int_a^b f(x(t), y(t)) \sqrt{(x'(t))^2 + (y'(t))^2} dt \]
+            </div>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример:</strong></p>
+            <p>Вычислить \( \int_L x ds \), где L — четверть окружности \( x^2 + y^2 = 1 \) в первом квадранте.</p>
+            <p><strong>Решение:</strong></p>
+            <p>Параметризуем окружность: \( x = \cos t \), \( y = \sin t \), \( t \in [0, \pi/2] \).</p>
+            <div class="formula">
+                \[ ds = \sqrt{(-\sin t)^2 + (\cos t)^2} dt = dt \]
+                \[ \int_0^{\pi/2} \cos t \cdot 1 dt = \sin t \big|_0^{\pi/2} = 1 \]
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>3. Криволинейный интеграл второго рода</h2>
+        
+        <div class="important">
+            <p><strong>Определение:</strong></p>
+            <div class="formula">
+                \[ \int_L Pdx + Qdy = \lim_{\max \Delta x_i \to 0} \sum_{i=1}^n [P(x_i^*, y_i^*) \Delta x_i + Q(x_i^*, y_i^*) \Delta y_i] \]
+            </div>
+            
+            <p><strong>Вычисление:</strong></p>
+            <p>При параметрическом задании кривой \( x = x(t) \), \( y = y(t) \), \( t \in [a,b] \):</p>
+            <div class="formula">
+                \[ \int_L Pdx + Qdy = \int_a^b \left[ P(x(t), y(t)) x'(t) + Q(x(t), y(t)) y'(t) \right] dt \]
+            </div>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример:</strong></p>
+            <p>Вычислить \( \int_L y dx + x dy \), где L — отрезок от (0,0) до (1,2).</p>
+            <p><strong>Решение:</strong></p>
+            <p>Параметризуем отрезок: \( x = t \), \( y = 2t \), \( t \in [0,1] \).</p>
+            <div class="formula">
+                \[ \int_0^1 [2t \cdot 1 + t \cdot 2] dt = \int_0^1 4t dt = 2t^2 \big|_0^1 = 2 \]
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>4. Связь между интегралами</h2>
+        
+        <div class="important">
+            <p>Если \( \vec{F} = (P, Q) \) — векторное поле, а \( \vec{\tau} \) — единичный касательный вектор к кривой L, то:</p>
+            <div class="formula">
+                \[ \int_L \vec{F} \cdot d\vec{r} = \int_L Pdx + Qdy = \int_L \vec{F} \cdot \vec{\tau} ds \]
+            </div>
+            <p>где \( d\vec{r} = (dx, dy) \) — вектор элементарного перемещения вдоль кривой.</p>
+        </div>
+        
+        <div class="warning">
+            <p><strong>Важно!</strong> Для замкнутых кривых (контуров) интеграл второго рода обозначается как:</p>
+            <div class="formula">
+                \[ \oint_L Pdx + Qdy \]
+            </div>
+            <p>Направление обхода существенно — положительным считается направление против часовой стрелки.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>5. Формула Грина</h2>
+        
+        <div class="important">
+            <p>Для плоской области D с кусочно-гладкой границей L:</p>
+            <div class="formula">
+                \[ \oint_L Pdx + Qdy = \iint_D \left( \frac{\partial Q}{\partial x} - \frac{\partial P}{\partial y} \right) dxdy \]
+            </div>
+            <p>Формула связывает криволинейный интеграл по контуру с двойным интегралом по области.</p>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример:</strong></p>
+            <p>Вычислить \( \oint_L x^2 dy - y^2 dx \), где L — окружность \( x^2 + y^2 = R^2 \).</p>
+            <p><strong>Решение:</strong></p>
+            <p>По формуле Грина:</p>
+            <div class="formula">
+                \[ \frac{\partial Q}{\partial x} = 2x, \quad \frac{\partial P}{\partial y} = -2y \]
+                \[ \iint_D (2x - (-2y)) dxdy = 2 \iint_D (x + y) dxdy = 0 \]
+                <p>(интегралы от x и y по симметричной области равны нулю)</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>6. Физические приложения</h2>
+        
+        <div class="important">
+            <p><strong>1. Работа силы:</strong></p>
+            <div class="formula">
+                \[ A = \int_L \vec{F} \cdot d\vec{r} = \int_L Pdx + Qdy + Rdz \]
+            </div>
+            
+            <p><strong>2. Поток векторного поля:</strong></p>
+            <div class="formula">
+                \[ \Phi = \int_L \vec{v} \cdot \vec{n} ds \]
+            </div>
+            <p>где \( \vec{n} \) — единичная нормаль к кривой.</p>
+            
+            <p><strong>3. Длина кривой:</strong></p>
+            <div class="formula">
+                \[ L = \int_L ds \]
+            </div>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример (работа силы):</strong></p>
+            <p>Вычислить работу силы \( \vec{F} = (y, -x) \) вдоль окружности \( x^2 + y^2 = 1 \) против часовой стрелки.</p>
+            <p><strong>Решение:</strong></p>
+            <div class="formula">
+                \[ A = \oint_L y dx - x dy = \iint_D (-1 - 1) dxdy = -2 \cdot \pi \cdot 1^2 = -2\pi \]
+            </div>
+        </div>
+    </section>
+
+    <div class="summary">
+        <h2>Итог:</h2>
+        <p>Криволинейные интегралы — мощный инструмент математического анализа с широкими приложениями в физике и технике. Основные моменты:</p>
+        <ul>
+            <li>Интеграл 1-го рода не зависит от направления, интеграл 2-го рода — зависит</li>
+            <li>Формула Грина связывает интеграл по контуру с интегралом по области</li>
+            <li>Криволинейные интегралы применяются для вычисления работы, потока, массы и других физических величин</li>
+            <li>При вычислении важно правильно параметризовать кривую</li>
+        </ul>
+    </div>
+{% endblock %}

@@ -1,12 +1,16 @@
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
+from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
+from django.conf import settings
 from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
 from .models import User, Courses, CourseChatHistory
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
+from pprint import pprint
+import requests
 import random
 import asyncio
 
@@ -153,7 +157,12 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
         history.history.append({"role": "user", 'message': input, "content": content})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=history.history,
+            messages=[
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ],
             web_search = False
         )
     else:
@@ -166,7 +175,7 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
         history.history.append({"role": "user", 'message':input, "content": content + "Ни в коем случае не забудь вывести источники!!"})
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=history.history,
+            messages=history,
             web_search = True
         )
     history.history.append({'role': 'assistant', 'message': response.choices[0].message.content, 'content': response.choices[0].message.content})
@@ -194,3 +203,31 @@ async def sendMessage(request):
         else:
             return JsonResponse({'message': form.errors})
     return JsonResponse({'message': 'Invalid request'})
+
+def render_topics(request, topic_name):
+    return render(request, 'topics/' + topic_name + '.html')
+
+api_key = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
+def req():
+    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    data = {
+        "model": "deepseek-ai/DeepSeek-R1",
+        "messages": [
+            {
+                "role": "user",
+                "content": "can you please provide for me html code with conspect about limits?"
+            }
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    return response.json()
+
+pprint(req())

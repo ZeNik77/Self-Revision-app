@@ -32,3 +32,6 @@ class Test(models.Model):
 class CourseChatHistory(models.Model):
     course_id = models.IntegerField()
     history = ArrayField(models.JSONField())
+
+class Topic(models.Model):
+    topic_name = models.CharField(max_length=128)
