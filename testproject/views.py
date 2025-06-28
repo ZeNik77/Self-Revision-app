@@ -181,6 +181,7 @@ async def chatGPT(input, course, course_id, topic_name, topic_description, inter
     history.history.append({'role': 'assistant', 'message': response.choices[0].message.content, 'content': response.choices[0].message.content})
     await history.asave()
     return response
+
 async def sendMessage(request):
     if request.method == 'POST':
         form = AIForm(request.POST, request.FILES)

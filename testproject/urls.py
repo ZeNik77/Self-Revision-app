@@ -30,5 +30,5 @@ urlpatterns = [
     path('sendMessage_ajax/', views.sendMessage, name='sendMessage'),
     path('home/', views.home, name='home'),
     path('about/', views.about, name='about'),
-    path('courses/topics/<str:topic_name>/', views.render_topics)
+    path('courses/topics/<str:topic_name>/', views.render_topics),
 ]

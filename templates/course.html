@@ -38,56 +38,58 @@
       </div>
     </div>
 
-    <div class="col-md-6 mx-auto mb-4">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{{ topic_name }}</h5>
-          <span class="badge bg-light text-dark">{{ course }}</span>
-        </div>
-        <div class="card-body">
-          <p class="card-text">
-            {{ topic_description }}
-          </p>
+    <div class="">
+      <div class="col-md-6 mx-auto mb-4">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ topic_name }}</h5>
+            <span class="badge bg-light text-dark">{{ course }}</span>
+          </div>
+          <div class="card-body">
+            <p class="card-text">
+              {{ topic_description }}
+            </p>
+          </div>
         </div>
       </div>
+
+      <div class="container mt-5">
+        <form id="aiForm" class="card shadow-sm p-4">
+          {% csrf_token %}
+          <h4 class="mb-3 text-primary">Talk to AI</h4>
+
+          <div class="mb-3">
+            {{ form.non_field_errors }}
+            {{ form.prompt.label_tag }}
+            {{ form.prompt }}
+            <div class="form-check form-switch mb-3">
+              {{ form.internet_toggle }}
+              <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+                {{ form.internet_toggle.label }}
+              </label>
+            </div>
+            {{ form.file.label_tag }}
+            {{ form.file }}
+            {{ form.course }}
+            {{ form.course_id }}
+            {{ form.topic_name }}
+            {{ form.topic_description }}
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+            <span id="loadingText" class="text-muted d-none">
+              ⏳ Generating...
+            </span>
+          </div>
+
+          <div id="aiAnswerBox" class="d-none">
+            <label class="form-label fw-bold">AI Response</label>
+            <div id="aiAnswer" class="p-3 bg-light border rounded">ХУИ
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-
-    <!-- <div class="container mt-5">
-      <form id="aiForm" class="card shadow-sm p-4">
-        {% csrf_token %}
-        <h4 class="mb-3 text-primary">Talk to AI</h4>
-
-        <div class="mb-3">
-          {{ form.non_field_errors }}
-          {{ form.prompt.label_tag }}
-          {{ form.prompt }}
-          <div class="form-check form-switch mb-3">
-            {{ form.internet_toggle }}
-            <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
-              {{ form.internet_toggle.label }}
-            </label>
-          </div>
-          {{ form.file.label_tag }}
-          {{ form.file }}
-          {{ form.course }}
-          {{ form.course_id }}
-          {{ form.topic_name }}
-          {{ form.topic_description }}
-        </div>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
-          <span id="loadingText" class="text-muted d-none">
-            ⏳ Generating...
-          </span>
-        </div>
-
-        <div id="aiAnswerBox" class="d-none">
-          <label class="form-label fw-bold">AI Response</label>
-          <div id="aiAnswer" class="p-3 bg-light border rounded">ХУИ
-          </div>
-        </div>
-      </form>
-    </div> -->
   </div>
   
   <div class="ai-assistant">
