@@ -50,35 +50,18 @@
         <p class="card-text">
           {{ topic.description }}
         </p>
-        <form id="generateTestForm">
+        <form id="generateTestForm" method="POST">
+          {% csrf_token %}
           {{ addTestForm.course_id }}
           {{ addTestForm.topic_id }}
           <div class="mb-3">
-            <button type="submit" id="submitTest" class="btn btn-success">Generate test on the topic</button>
+            <button type="submit" name="submit_test" id="submit_test" class="btn btn-success">Generate test on the topic</button>
           </div>
+        </form>
       </div>
     </div>
   </div>
-  {% else %}
-  <div class="container mt-5">
-    <form id="addTopicForm" class="card shadow-sm p-4" method="POST">
-      {% csrf_token %}
-      <h4 class="mb-3 text-primary">Add topic</h4>
-
-      <div class="mb-3">
-        {{ addTopicForm.non_field_errors }}
-        {{ addTopicForm.topic_name.label }}
-        {{ addTopicForm.topic_name }}
-        {{ addTopicForm.topic_description.label }}
-        {{ addTopicForm.topic_description }}
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <button type="submit" name="add_topic" id="add_topic" class="btn btn-success">Submit</button>
-      </div>
-    </form>
-  </div>
-  {% endif %}
-  <div class="container mt-5">
+<div class="container mt-5">
     <form id="aiForm" class="card shadow-sm p-4">
       {% csrf_token %}
       <h4 class="mb-3 text-primary">Talk to AI</h4>
@@ -113,7 +96,7 @@
           </div>
         </div>
       </form>
-    </div> -->
+    </div>
   </div>
   
   <div class="ai-assistant">
@@ -138,8 +121,29 @@
     </div>
   </div>
 
+  {% else %}
+  <div class="container mt-5">
+    <form id="addTopicForm" class="card shadow-sm p-4" method="POST">
+      {% csrf_token %}
+      <h4 class="mb-3 text-primary">Add topic</h4>
+
+      <div class="mb-3">
+        {{ addTopicForm.non_field_errors }}
+        {{ addTopicForm.topic_name.label }}
+        {{ addTopicForm.topic_name }}
+        {{ addTopicForm.topic_description.label }}
+        {{ addTopicForm.topic_description }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="add_topic" name="add_topic" id="add_topic" class="btn btn-success">Submit</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+  
   <script>
     $(document).ready(function() {
+        console.log('ready')
         $('#aiForm').on('submit', function(event) {
             event.preventDefault();
             $('#courseText').val('{{ course.name }}')

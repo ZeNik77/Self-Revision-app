@@ -130,7 +130,6 @@ def donat(request):
     return render(request, 'donat.html')
 def course(request, course_id):
     if request.method == 'POST':
-        print('WHAT WHAT WHAT')
         if 'add_topic' in request.POST:
             form = AddTopicForm(data=request.POST)
             if form.is_valid():

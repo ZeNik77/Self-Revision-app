@@ -130,7 +130,8 @@ class AddTopicForm(forms.Form):
         max_length=100,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter topic name'
+            'placeholder': 'Enter topic name',
+            'id': 'topic_name'
         })
     )
 
@@ -139,6 +140,7 @@ class AddTopicForm(forms.Form):
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'placeholder': 'Enter topic content',
-            'rows': 1
+            'rows': 5,
+            'id': 'topic_description'
         })
     )
