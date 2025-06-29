@@ -4,8 +4,9 @@ from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTestForm, AddTopicForm
-from .models import User, Courses, CourseChatHistory, Topic
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTestForm, AddTopicForm, TestForm
+from .models import User, Courses, CourseChatHistory, Topic, Test
+from .generate_tests import generateTest
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
 import requests
@@ -150,15 +151,30 @@ def course(request, course_id):
     topics = Topic.objects.filter(course_id=course_id)
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics})
 
-
 def topic(request, course_id, topic_id):
-    if Courses.objects.filter(course_id=course_id).exists() and Topic.objects.filter(topic_id=topic_id):
+    if Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() and Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
         course = Courses.objects.get(course_id=course_id)
         topic = Topic.objects.get(topic_id=topic_id)
     else:
         return redirect(reverse('courses'))
+    if request.method == 'POST':
+        if 'submit_test' in request.POST:
+            form = AddTestForm(data=request.POST)
+            if form.is_valid():
+                test = generateTest(topic.name, topic.description)
+                test_id = random.randint(2, 2147483646)
+                while Test.objects.filter(test_id=test_id).exists():
+                    test_id = random.randint(2, 2147483646)
+                Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test)
     topics = Topic.objects.filter(course_id=course_id)
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics, 'topic': topic})
+    test = Test.objects.filter(topic_id=topic_id)
+    if not test.exists():
+        test = None
+        testForm = None
+    else:
+        test = test.last()
+        testForm = TestForm(test.questions)
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm})
     
 def home(request):
     return render(request, 'home.html')

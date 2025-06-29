@@ -96,9 +96,42 @@
           </div>
         </div>
       </form>
+</div>
+</div>
+{% if test_form %}
+<div class="col-md-6 mx-auto mb-4">
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-secondary text-white">
+      Test
     </div>
+    <form id="testForm" method="POST">
+      {% csrf_token %}
+
+      {% for field in test_form %}
+        <div class="card mb-4">
+          <div class="card-header fw-bold">
+            {{ field.label }}
+          </div>
+          <div class="card-body">
+            {% for radio in field %}
+              <div class="form-check mb-2">
+                {{ radio.tag }}
+                <label class="form-check-label" for="{{ radio.id_for_label }}">
+                  {{ radio.choice_label }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="mb-3 text-center">
+        <button type="submit" class="btn btn-primary">Submit Answer</button>
+      </div>
+    </form>
   </div>
-  
+</div>  
+{% endif %}
   <div class="ai-assistant">
     <button class="ai-button" id="aiButton">AI</button>
 

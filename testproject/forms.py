@@ -121,9 +121,6 @@ class AIForm(forms.Form):
 class AddTestForm(forms.Form):
     course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idAddTest', 'class': 'd-none'}))
     topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))
-class TestForm(forms.Form):
-    questions = forms.JSONField()
-
 class AddTopicForm(forms.Form):
     topic_name = forms.CharField(
         label="Topic Name",
@@ -144,3 +141,21 @@ class AddTopicForm(forms.Form):
             'id': 'topic_description'
         })
     )
+
+def TestForm(questions):
+    """
+    Dynamically create a form with one ChoiceField per question.
+    """
+    # Build a dict of fields
+    fields = {}
+    for i, q in enumerate(questions, start=1):
+        print(q)
+        field_name = f"question_{i}"
+        fields[field_name] = forms.ChoiceField(
+            label=q["question"],
+            choices=[(a, a) for a in q["answer"]],
+            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+            required=True
+        )
+    # Create the form class dynamically
+    return type("DynamicQuizForm", (forms.Form,), fields)
