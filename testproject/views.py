@@ -20,9 +20,9 @@ def index(request):
         elif 'register' in request.POST:
             signup(request)
 
-    # redirecting to login page
-    return redirect(reverse('login'))
-
+    if not auth.get_user(request).is_active:
+        return redirect(reverse('login'))
+    else:  return redirect(reverse('home'))
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
 
