@@ -94,6 +94,8 @@ def superUsers():
         print('No super users')
 
 def courses (request):
+    if not auth.get_user(request).is_active:
+        return redirect(reverse('index'))
     if request.method == "POST":
         if "add_course" in request.POST:
             form = AddCourseForm(data=request.POST)
@@ -152,11 +154,12 @@ def course(request, course_id):
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics})
 
 def topic(request, course_id, topic_id):
-    if Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() and Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
+    if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() or not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
+        return redirect(reverse('courses'))
+    else:
         course = Courses.objects.get(course_id=course_id)
         topic = Topic.objects.get(topic_id=topic_id)
-    else:
-        return redirect(reverse('courses'))
+    
     if request.method == 'POST':
         if 'submit_test' in request.POST:
             form = AddTestForm(data=request.POST)
