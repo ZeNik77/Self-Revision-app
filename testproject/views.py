@@ -3,13 +3,11 @@ from django.shortcuts import render
 from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
-from django.conf import settings
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm
-from .models import User, Courses, CourseChatHistory
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTestForm, AddTopicForm
+from .models import User, Courses, CourseChatHistory, Topic
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
-from pprint import pprint
 import requests
 import random
 import asyncio
@@ -131,13 +129,38 @@ def courses (request):
 def donat(request):
     return render(request, 'donat.html')
 def course(request, course_id):
+    if request.method == 'POST':
+        print('WHAT WHAT WHAT')
+        if 'add_topic' in request.POST:
+            form = AddTopicForm(data=request.POST)
+            if form.is_valid():
+                name = form.cleaned_data['topic_name']
+                description = form.cleaned_data['topic_description']
+                topic_id = random.randint(2, 2147483646)
+                while Topic.objects.filter(topic_id=topic_id).exists():
+                    topic_id = random.randint(2, 2147483646)
+                # print(name, description, topic_id)
+                Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
+                return redirect(reverse('course', args=(course_id,)))
+            else:
+                print(form.errors)
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
-    gradient_summary = "Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума."
-    return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'course_id': course.course_id, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
+    topics = Topic.objects.filter(course_id=course_id)
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics})
 
+
+def topic(request, course_id, topic_id):
+    if Courses.objects.filter(course_id=course_id).exists() and Topic.objects.filter(topic_id=topic_id):
+        course = Courses.objects.get(course_id=course_id)
+        topic = Topic.objects.get(topic_id=topic_id)
+    else:
+        return redirect(reverse('courses'))
+    topics = Topic.objects.filter(course_id=course_id)
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics, 'topic': topic})
+    
 def home(request):
     return render(request, 'home.html')
 
@@ -204,8 +227,6 @@ async def sendMessage(request):
             return JsonResponse({'message': form.errors})
     return JsonResponse({'message': 'Invalid request'})
 
-def render_topics(request, topic_name):
-    return render(request, 'topics/' + topic_name + '.html')
 
 api_key = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
 def req():

@@ -123,3 +123,22 @@ class AddTestForm(forms.Form):
     topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))
 class TestForm(forms.Form):
     questions = forms.JSONField()
+
+class AddTopicForm(forms.Form):
+    topic_name = forms.CharField(
+        label="Topic Name",
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter topic name'
+        })
+    )
+
+    topic_description = forms.CharField(
+        label="Topic content",
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter topic content',
+            'rows': 1
+        })
+    )
