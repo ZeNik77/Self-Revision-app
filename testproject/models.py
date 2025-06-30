@@ -32,3 +32,4 @@ class Test(models.Model):
     course_id = models.IntegerField()
     user_id = models.IntegerField()
     questions = models.JSONField()
+    passed = models.BooleanField(default=False)
