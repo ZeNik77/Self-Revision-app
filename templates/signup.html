@@ -18,7 +18,18 @@
         <form class="register-box" action="#" method="POST">
             {% csrf_token %}
             {{ signup_form.non_field_errors }}
-            
+
+            {% if signup_form.username.errors %}
+                {{ signup_form.username.errors.0 }}
+            {% endif %}
+
+            {% if signup_form.password1.errors %}
+                {{ signup_form.password1.errors.0 }}
+            {% endif %}
+
+            {% if signup_form.password2.errors %}
+                {{ signup_form.password2.errors.0 }}
+            {% endif %}
             <!-- box name  -->
             <div class="text-container">
                 Registration

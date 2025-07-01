@@ -19,6 +19,13 @@
             {% csrf_token %}
             {{ login_form.non_field_errors }}
             
+            {% if login_form.username.errors %}
+                {{ login_form.username.errors.0 }}
+            {% endif %}
+
+            {% if login_form.password.errors %}
+                {{ login_form.password.errors.0 }}
+            {% endif %}
             <!-- box name  -->
             <div class="text-container">
                 Login

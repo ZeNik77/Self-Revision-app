@@ -25,73 +25,55 @@ def index(request):
         return redirect(reverse('login'))
     else:  return redirect(reverse('home'))
 def signup(request):
-    signup_form = SignUpForm(data = request.POST)
+    if request.method == 'POST':
+        signup_form = SignUpForm(data = request.POST)
 
-    if signup_form.is_valid():
+        if signup_form.is_valid():
 
-        # assigning an id for user
-        if len(User.objects.all()) == 0:
-            user_id = 1
-        else:
-            user_id = User.objects.all().last().user_id + 1
+            # assigning an id for user
+            if len(User.objects.all()) == 0:
+                user_id = 1
+            else:
+                user_id = User.objects.all().last().user_id + 1
 
-        # creatig new user
-        user = signup_form.save()
-        user.user_id = user_id
-        user.save()
+            # creatig new user
+            user = signup_form.save()
+            user.user_id = user_id
+            user.save()
 
-        # login into an account
-        auth.login(request, user)
+            # login into an account
+            auth.login(request, user)
+            
+            return redirect(reverse('home'))
         
-        return redirect(reverse('home'))
-    
-    # if we do not succeed with registration than return main page
-    else:
-        return render(request, 'signup.html', {'signup_form' : SignUpForm})
-
+        # if we do not succeed with registration than return main page
+        else:
+            return render(request, 'signup.html', {'signup_form' : signup_form})
+    return render(request, 'signup.html', {'signup_form': SignUpForm})
 
 def login(request):
-    # getting data from login_form
-    login_form = LoginForm(data = request.POST)
+    if request.method == 'POST':
 
-    # trying to authenticate
-    if login_form.is_valid():
-        username = login_form.cleaned_data['username']
-        password = login_form.cleaned_data['password']
+        login_form = LoginForm(data = request.POST)
+        if login_form.is_valid():
+            username = login_form.cleaned_data['username']
+            password = login_form.cleaned_data['password']
 
-        user = auth.authenticate(username=username, password=password)
+            user = auth.authenticate(username=username, password=password)
 
-        # if such user exists than authenticate
-        if user:
-            auth.login(request, user)
-            return redirect(reverse('home'))
-    
-    # if authentication failed than hust return main page
+            if user:
+                auth.login(request, user)
+                return redirect(reverse('home'))
+            else:
+                login_form.add_error(None, "No such user exists!")
+                return render(request, 'login.html', {'login_form': login_form})
+        else:
+            return render(request, 'login.html', {'login_form': login_form})
     return render(request, 'login.html', {'login_form': LoginForm})
 
 def logout(request):
     auth.logout(request)
     return redirect(reverse('index'))
-
-
-# Вот кому-то делать нехуй
-
-def printAllUsers():
-    for el in User.objects.all():
-        print(el.username)
-
-def testUser():
-    testUser = User.objects.get(username='test')
-    if testUser:
-        print('User \'test\' exists')
-    else: print('nah')
-
-def superUsers():
-    su = User.objects.filter(is_superuser=True)
-    for el in su:
-        print(el.username)
-    else:
-        print('No super users')
 
 def courses (request):
     if not auth.get_user(request).is_active:
@@ -116,7 +98,6 @@ def courses (request):
             course_id = request.POST['edit_course']
             new_name = request.POST['name']
             new_desc = request.POST['description']
-            print(new_name, new_desc)
             courses = Courses.objects.filter(id=course_id)
             if courses:
                 courses[0].name = new_name
@@ -141,7 +122,6 @@ def course(request, course_id):
                 topic_id = random.randint(2, 2147483646)
                 while Topic.objects.filter(topic_id=topic_id).exists():
                     topic_id = random.randint(2, 2147483646)
-                # print(name, description, topic_id)
                 Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
                 return redirect(reverse('course', args=(course_id,)))
             else:
@@ -180,8 +160,10 @@ def topic(request, course_id, topic_id):
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm})
     
 def home(request):
-    return render(request, 'home.html')
-
+    if auth.get_user(request).is_active:
+        return render(request, 'home.html')
+    else:
+        return redirect(reverse('login'))
 def about(request):
     return render(request, 'about.html')
 
@@ -268,3 +250,5 @@ def req():
     response = requests.post(url, headers=headers, json=data)
 
     return response.json()
+
+# Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
