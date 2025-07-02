@@ -41,13 +41,13 @@
 
         {% for c in courses %}
 
-        <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm">
             <a href="{% url 'course' c.course_id %}">
                 <img class="rounded-t-lg" src="../static/math.jpg" alt="" />
             </a>
             <div class="p-5">
                 <a href="{% url 'course' c.course_id %}">
-                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ c.name }}</h5>
+                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">{{ c.name }}</h5>
                 </a>
                 <p class="mb-3 font-normal text-gray-700 dark:text-gray-400" id="desc-{{ c.id }}">{{ c.description }}</p>
                 <a href="{% url 'course' c.course_id %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-indigo-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-blue-800">
