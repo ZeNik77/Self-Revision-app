@@ -167,6 +167,39 @@ def home(request):
 def about(request):
     return render(request, 'about.html')
 
+async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
+    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
+    content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
+
+{topic_description}
+
+If the question is unrelated to this topic, reply with: "The question is not related to the specified topic."
+Do not include any introductions, apologies, or explanations—only the core answer.
+
+Always start your reply exactly with: "Answer: " (without quotes).
+Here is the question: {input}
+"""
+    if fileText:
+        content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"
+    try:
+        history = await CourseChatHistory.objects.aget(course_id=course_id)
+    except:
+        history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
+    history.history.append({"role": "user", 'message': input, "content": content})
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    data = {
+        "model": "deepseek-ai/DeepSeek-R1",
+        "messages": history.history,
+        "web_search": internet_toggle,
+    }
+    response_json = requests.post(url, headers=headers, json=data).json()
+    answer_content = response_json["choices"][0]["message"]["content"]
+    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+    return answer
+
 async def chatGPT(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     client = Client()
     content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
@@ -221,34 +254,13 @@ async def sendMessage(request):
                     fileText += chunk.decode('utf-8')
             else:
                 fileText = ''
-            response = await chatGPT(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
-            return JsonResponse({'message': response.choices[0].message.content})
+            answer = await deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
+            return JsonResponse({'message': answer})
         else:
             return JsonResponse({'message': form.errors})
     return JsonResponse({'message': 'Invalid request'})
 
 
 api_key = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
-def req():
-    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": [
-            {
-                "role": "user",
-                "content": "can you please provide for me html code with conspect about limits?"
-            }
-        ]
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-
-    return response.json()
 
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
