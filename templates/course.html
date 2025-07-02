@@ -50,14 +50,29 @@
         <p class="card-text">
           {{ topic.description }}
         </p>
-        <form id="generateTestForm" method="POST">
-          {% csrf_token %}
-          {{ addTestForm.course_id }}
-          {{ addTestForm.topic_id }}
-          <div class="mb-3">
-            <button type="submit" name="submit_test" id="submit_test" class="btn btn-success">Generate test on the topic</button>
+        <div class="row">
+          <div class="col-auto">
+            <form id="generateTestForm" method="POST">
+              {% csrf_token %}
+              <div class="mb-3">
+                <button type="submit" name="submit_test" id="submit_test" class="btn btn-success">Generate test on the topic</button>
+              </div>
+            </form>
           </div>
-        </form>
+          <div class="col-auto">
+            <form id="addRevisionForm" method="POST">
+              {% csrf_token %}
+              <div class="mb-1">
+                <button type="submit" name="submit_revision" id="submit_revision" class="btn btn-success">Revise</button>
+              </div>
+            </form>
+          </div>
+        </div>
+          {% for el in revisions %}
+          <div class="p-3 bg-light border rounded">
+            {{ el|safe }}
+          </div>
+          {% endfor %}
       </div>
     </div>
   </div>

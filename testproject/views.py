@@ -4,7 +4,7 @@ from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTestForm, AddTopicForm, TestForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
 from g4f.client import Client
@@ -131,7 +131,7 @@ def course(request, course_id):
     else:
         return redirect(reverse('courses'))
     topics = Topic.objects.filter(course_id=course_id)
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics})
 
 def topic(request, course_id, topic_id):
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() or not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
@@ -142,13 +142,18 @@ def topic(request, course_id, topic_id):
     
     if request.method == 'POST':
         if 'submit_test' in request.POST:
-            form = AddTestForm(data=request.POST)
-            if form.is_valid():
-                test = generateTest(topic.name, topic.description)
+            test = generateTest(topic.name, topic.description)
+            test_id = random.randint(2, 2147483646)
+            while Test.objects.filter(test_id=test_id).exists():
                 test_id = random.randint(2, 2147483646)
-                while Test.objects.filter(test_id=test_id).exists():
-                    test_id = random.randint(2, 2147483646)
-                Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test)
+            Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test)
+        if 'submit_revision' in request.POST:
+            course = Courses.objects.get(course_id=course_id)
+            topic = Topic.objects.get(topic_id=topic_id)
+            revision = revise(course.name, topic.name, topic.description)
+            topic.revisions.append(revision)
+            topic.save()
+
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id)
     if not test.exists():
@@ -157,7 +162,8 @@ def topic(request, course_id, topic_id):
     else:
         test = test.last()
         testForm = TestForm(test.questions)
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'addTestForm': AddTestForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm})
+    revisions = topic.revisions
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions})
     
 def home(request):
     if auth.get_user(request).is_active:
@@ -166,6 +172,22 @@ def home(request):
         return redirect(reverse('login'))
 def about(request):
     return render(request, 'about.html')
+
+def revise(course, topic_name, topic_description):
+    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
+    content = f"Generate a clear, structured summary in English on the topic \"{topic_name}\" from the course \"{course}\" with the following description: {topic_description}. The summary must include key ideas, important details, and subtle or often overlooked points. Format the output as an HTML unordered list (<ul><li>...</li></ul>) without any additional text or explanations."
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    data = {
+        "model": "deepseek-ai/DeepSeek-R1",
+        "messages": [{"role": "user", "content": content}],
+    }
+    response_json = requests.post(url, headers=headers, json=data).json()
+    answer_content = response_json["choices"][0]["message"]["content"]
+    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+    return answer
 
 async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     url = "https://api.intelligence.io.solutions/api/v1/chat/completions"

@@ -118,9 +118,6 @@ class AIForm(forms.Form):
     topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'd-none'}))
     topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'd-none'}))
 
-class AddTestForm(forms.Form):
-    course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idAddTest', 'class': 'd-none'}))
-    topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))
 class AddTopicForm(forms.Form):
     topic_name = forms.CharField(
         label="Topic Name",
