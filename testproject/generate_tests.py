@@ -25,14 +25,15 @@ def generateTest(topic_name, topic_description):
     
     # return json.loads(response.json()["choices"][0]["message"]["content"])
     test = json.loads(response.json()["choices"][0]["message"]["content"].split('</think>\n')[1])
+    correct = []
     for i in range(len(test)):
         q = test[i]
         question = q['question']
         answer = q['answer']
-        correct = answer[0]
+        correct.append(answer[0])
         random.shuffle(answer)
-        test[i] = {'number': i+1, 'question': question, 'answer': answer, 'correct': correct}
-    return test
+        test[i] = {'number': i+1, 'question': question, 'answer': answer}
+    return (test, correct)
 
 api_key = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
 if __name__ == '__main__':

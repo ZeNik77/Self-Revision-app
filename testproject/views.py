@@ -4,7 +4,7 @@ from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
 from g4f.client import Client
@@ -141,29 +141,58 @@ def topic(request, course_id, topic_id):
         topic = Topic.objects.get(topic_id=topic_id)
     
     if request.method == 'POST':
-        if 'submit_test' in request.POST:
-            test = generateTest(topic.name, topic.description)
+        if 'submit_addTest' in request.POST:
+            (test, correct) = generateTest(topic.name, topic.description)
             test_id = random.randint(2, 2147483646)
             while Test.objects.filter(test_id=test_id).exists():
                 test_id = random.randint(2, 2147483646)
-            Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test)
+            Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
             revision = revise(course.name, topic.name, topic.description)
             topic.revisions.append(revision)
             topic.save()
+        if 'submit_test' in request.POST:
+            test = Test.objects.filter(topic_id=topic_id)
+            if test.exists():
+                test = test.last()
+                if test.passed: return redirect(reverse('topic', args=(course_id, topic_id)))
+            else:
+                return redirect(reverse('topic'), args=(course_id, topic_id))
+            form = TestForm2(request.POST, questions=test.questions, correct=test.correct)
+            if form.is_valid():
+                grade = 0
+                correctQ = []
+                incorrectQ = []
+                full = len(form.correct)
+                for i in range(len(form.correct)):
+                    answer = form.cleaned_data[f'question_{i}']
+                    correct = form.correct[i]
+                    if answer == correct:
+                        correctQ.append({'question': form.fields[f'question_{i}'].label, 'answer': answer})
+                        grade += 1
+                    else:
+                        incorrectQ.append({'question': form.fields[f'question_{i}'].label, 'answer': answer, 'correct': form.correct[i]})
+                test.grade = int((grade/full) * 100)
+                test.correctQuestions = correctQ
+                test.incorrectQuestions = incorrectQ
+                test.passed = True
+                test.save()
+            else:
+                print(form.errors)
 
     topics = Topic.objects.filter(course_id=course_id)
-    test = Test.objects.filter(topic_id=topic_id)
+    test = Test.objects.filter(topic_id=topic_id, passed=False)
+    passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
     if not test.exists():
         test = None
         testForm = None
     else:
         test = test.last()
-        testForm = TestForm(test.questions)
+        testForm = TestForm2(questions=test.questions, correct=test.correct)
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests})
     
 def home(request):
     if auth.get_user(request).is_active:

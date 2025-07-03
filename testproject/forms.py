@@ -146,7 +146,6 @@ def TestForm(questions):
     # Build a dict of fields
     fields = {}
     for i, q in enumerate(questions, start=1):
-        print(q)
         field_name = f"question_{i}"
         fields[field_name] = forms.ChoiceField(
             label=q["question"],
@@ -156,3 +155,17 @@ def TestForm(questions):
         )
     # Create the form class dynamically
     return type("DynamicQuizForm", (forms.Form,), fields)
+
+class TestForm2(forms.Form):
+  def __init__(self, *args, **kwargs):
+    questions = kwargs.pop('questions')
+    self.correct = kwargs.pop('correct')
+    super(TestForm2, self).__init__(*args, **kwargs)
+    for i, q in enumerate(questions, start=0):
+        field_name = f"question_{i}"
+        self.fields[field_name] = forms.ChoiceField(
+            label=q["question"],
+            choices=[(a, a) for a in q["answer"]],
+            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+            required=True
+        )

@@ -20,7 +20,7 @@ class Topic(models.Model):
     description = models.TextField()
     course_id = models.IntegerField()
     user_id = models.IntegerField()
-    revisions = ArrayField(models.TextField(), default=[])
+    revisions = ArrayField(models.TextField(), default=list)
 
 class CourseChatHistory(models.Model):
     course_id = models.IntegerField()
@@ -33,4 +33,8 @@ class Test(models.Model):
     course_id = models.IntegerField()
     user_id = models.IntegerField()
     questions = models.JSONField()
+    correct = ArrayField(models.TextField(), default=list)
+    correctQuestions = models.JSONField(default=None)
+    incorrectQuestions = models.JSONField(default=None)
+    grade = models.IntegerField(default=0)
     passed = models.BooleanField(default=False)

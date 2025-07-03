@@ -27,7 +27,12 @@
 
       <a href="{% url 'course' course.course_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
         <div class="d-flex w-100 align-items-center justify-content-between">
-          <strong class="mb-1">Создать тему</strong>
+          <strong class="mb-1">Create a topic</strong>
+        </div>
+      </a> 
+      <a href="{% url 'courses'%}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
+        <div class="d-flex w-100 align-items-center justify-content-between">
+          <strong class="mb-1">Back to the Courses</strong>
         </div>
       </a> 
       <!--
@@ -39,7 +44,7 @@
       -->
     </div>
   </div>
-  {% if topic %}
+{% if topic %}
   <div class="col-md-6 mx-auto mb-4">
     <div class="card shadow-sm border-0">
       <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
@@ -55,7 +60,7 @@
             <form id="generateTestForm" method="POST">
               {% csrf_token %}
               <div class="mb-3">
-                <button type="submit" name="submit_test" id="submit_test" class="btn btn-success">Generate test on the topic</button>
+                <button type="submit" name="submit_addTest" id="submit_test" class="btn btn-success">Generate test on the topic</button>
               </div>
             </form>
           </div>
@@ -76,42 +81,42 @@
       </div>
     </div>
   </div>
-<div class="container mt-5">
-    <form id="aiForm" class="card shadow-sm p-4">
-      {% csrf_token %}
-      <h4 class="mb-3 text-primary">Talk to AI</h4>
+  <div class="container mt-5">
+      <form id="aiForm" class="card shadow-sm p-4">
+        {% csrf_token %}
+        <h4 class="mb-3 text-primary">Talk to AI</h4>
 
-        <div class="mb-3">
-          {{ form.non_field_errors }}
-          {{ form.prompt.label_tag }}
-          {{ form.prompt }}
-          <div class="form-check form-switch mb-3">
-            {{ form.internet_toggle }}
-            <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
-              {{ form.internet_toggle.label }}
-            </label>
+          <div class="mb-3">
+            {{ form.non_field_errors }}
+            {{ form.prompt.label_tag }}
+            {{ form.prompt }}
+            <div class="form-check form-switch mb-3">
+              {{ form.internet_toggle }}
+              <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+                {{ form.internet_toggle.label }}
+              </label>
+            </div>
+            {{ form.file.label_tag }}
+            {{ form.file }}
+            {{ form.course }}
+            {{ form.course_id }}
+            {{ form.topic_name }}
+            {{ form.topic_description }}
           </div>
-          {{ form.file.label_tag }}
-          {{ form.file }}
-          {{ form.course }}
-          {{ form.course_id }}
-          {{ form.topic_name }}
-          {{ form.topic_description }}
-        </div>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
-          <span id="loadingText" class="text-muted d-none">
-            ⏳ Generating...
-          </span>
-        </div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+            <span id="loadingText" class="text-muted d-none">
+              ⏳ Generating...
+            </span>
+          </div>
 
-        <div id="aiAnswerBox" class="d-none">
-          <label class="form-label fw-bold">AI Response</label>
-          <div id="aiAnswer" class="p-3 bg-light border rounded">ХУИ
+          <div id="aiAnswerBox" class="d-none">
+            <label class="form-label fw-bold">AI Response</label>
+            <div id="aiAnswer" class="p-3 bg-light border rounded">ХУИ
+            </div>
           </div>
-        </div>
-      </form>
-</div>
+        </form>
+  </div>
 </div>
 {% if test_form %}
 <div class="col-md-6 mx-auto mb-4">
@@ -141,7 +146,7 @@
       {% endfor %}
 
       <div class="mb-3 text-center">
-        <button type="submit" class="btn btn-primary">Submit Answer</button>
+        <button type="submit" id="submit_test" name="submit_test" class="btn btn-primary">Submit Answer</button>
       </div>
     </form>
   </div>
@@ -168,8 +173,43 @@
       </div>
     </div>
   </div>
+  {% for t in passed_tests %}
+  <div class="container mt-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Test Completed</h5>
+        <span class="badge bg-light text-dark">Grade: {{ t.grade }}%</span>
+      </div>
+      <div class="card-body">
+        <p class="mb-3">
+          <strong>Correct Answers:</strong> {{ t.correctQuestions|length }} / {{ t.correct|length }}
+        </p>
+        <div class="mb-3">
+          <strong>Incorrect Answers:</strong>
+          <ul class="list-group mt-2">
+            {% for q in t.incorrectQuestions %}
+              <li class="list-group-item">
+                <p class="mb-1">
+                  <strong>Question:</strong> {{ q.question }}
+                </p>
+                <p class="mb-1 text-danger">
+                  <strong>Your Answer:</strong> {{ q.answer }}
+                </p>
+                <p class="mb-0 text-success">
+                  <strong>Correct Answer:</strong> {{ q.correct }}
+                </p>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-muted">No incorrect answers 🎉</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 
-  {% else %}
+{% else %}
   <div class="container mt-5">
     <form id="addTopicForm" class="card shadow-sm p-4" method="POST">
       {% csrf_token %}
@@ -187,7 +227,7 @@
       </div>
     </form>
   </div>
-  {% endif %}
+{% endif %}
   
   <script>
     $(document).ready(function() {
