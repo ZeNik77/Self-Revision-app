@@ -173,7 +173,7 @@ def topic(request, course_id, topic_id):
                         correctQ.append({'question': form.fields[f'question_{i}'].label, 'answer': answer})
                         grade += 1
                     else:
-                        incorrectQ.append({'question': form.fields[f'question_{i}'].label, 'answer': answer, 'correct': form.correct[i]})
+                        incorrectQ.append({'question': form.fields[f'question_{i}'].label, 'answer': answer, 'correct': correct})
                 test.grade = int((grade/full) * 100)
                 test.correctQuestions = correctQ
                 test.incorrectQuestions = incorrectQ
