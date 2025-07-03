@@ -76,6 +76,7 @@ def logout(request):
 
 
 # Вот кому-то делать нехуй
+# наверное )
 
 def printAllUsers():
     for el in User.objects.all():
