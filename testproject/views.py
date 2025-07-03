@@ -23,7 +23,8 @@ def index(request):
             signup(request)
 
     # redirecting to login page
-    return redirect(reverse('login'))
+    return redirect(reverse('home'))
+    # return redirect(reverse('login'))
 
 def signup(request):
     signup_form = SignUpForm(data = request.POST)
@@ -140,7 +141,7 @@ def course(request, course_id):
     return render(request, 'course.html', {'form': AIForm, 'course': course.name, 'course_id': course.course_id, 'topic_name': 'Градиент', 'topic_description': gradient_summary})
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'landing.html')
 
 def about(request):
     return render(request, 'about.html')
