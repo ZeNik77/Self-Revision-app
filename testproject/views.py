@@ -112,6 +112,10 @@ def courses (request):
 
 def donat(request):
     return render(request, 'donat.html')
+def delete_topic(topic_id):
+    topic = Topic.objects.filter(topic_id=topic_id)
+    if topic:
+        topic[0].delete()
 def course(request, course_id):
     if request.method == 'POST':
         if 'add_topic' in request.POST:
@@ -126,12 +130,17 @@ def course(request, course_id):
                 return redirect(reverse('course', args=(course_id,)))
             else:
                 print(form.errors)
+        if 'delete_topic' in request.POST:
+            topic_id = request.POST['delete_topic']
+            delete_topic(topic_id)
+            return redirect(reverse('course', args=(course_id)))
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
     topics = Topic.objects.filter(course_id=course_id)
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics})
+
 
 def topic(request, course_id, topic_id):
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() or not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
@@ -141,12 +150,16 @@ def topic(request, course_id, topic_id):
         topic = Topic.objects.get(topic_id=topic_id)
     
     if request.method == 'POST':
+        # TODO: restrict repeated form submission
         if 'submit_addTest' in request.POST:
             (test, correct) = generateTest(topic.name, topic.description)
             test_id = random.randint(2, 2147483646)
             while Test.objects.filter(test_id=test_id).exists():
                 test_id = random.randint(2, 2147483646)
             Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
+            for el in Test.objects.filter(topic_id=topic_id, passed=False):
+                if el.test_id != test_id:
+                    el.delete()
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
@@ -182,6 +195,18 @@ def topic(request, course_id, topic_id):
             else:
                 print(form.errors)
 
+        if 'delete_topic' in request.POST:
+            t_id = request.POST['delete_topic']
+            delete_topic(t_id)
+            return redirect(reverse('topic', args=(course_id, topic_id)))
+        if 'delete_revision' in request.POST:
+            rev_i = int(request.POST['delete_revision'])
+            topic.revisions.pop(rev_i)
+            topic.save()
+        if 'delete_test' in request.POST:
+            test_id = request.POST['delete_test']
+            if (test := Test.objects.filter(test_id=test_id)).exists():
+                test.delete()
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
@@ -251,43 +276,6 @@ Here is the question: {input}
     answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
     return answer
 
-async def chatGPT(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
-    client = Client()
-    content = f'Отправь ответ пользователю, по теме "{topic_name}" из курса "{course}", конспект которой:\n {topic_description}\n\nЕсли вопрос не по теме, напиши, что он не по теме. Напиши только ответ на вопрос, начиная с "Ответ: "!!!. Вот вопрос: {input}'
-    if fileText:
-        content = 'Вместе с данными из файла, ' + fileText + ',' + content
-    try:
-        history = await CourseChatHistory.objects.aget(course_id=course_id)
-    except:
-        history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
-    if not internet_toggle:
-        history.history.append({"role": "user", 'message': input, "content": content})
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "user",
-                    "content": content
-                }
-            ],
-            web_search = False
-        )
-    else:
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor() as executor:
-            content = await asyncio.get_event_loop().run_in_executor(
-                executor,
-                lambda: (get_search_message(content))
-        )
-        history.history.append({"role": "user", 'message':input, "content": content + "Ни в коем случае не забудь вывести источники!!"})
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=history,
-            web_search = True
-        )
-    history.history.append({'role': 'assistant', 'message': response.choices[0].message.content, 'content': response.choices[0].message.content})
-    await history.asave()
-    return response
 async def sendMessage(request):
     if request.method == 'POST':
         form = AIForm(request.POST, request.FILES)

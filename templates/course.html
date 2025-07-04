@@ -18,11 +18,16 @@
     <div class="list-group list-group-flush border-bottom scrollarea">
 
       {% for t in topics %}
-      <a href="{% url 'topic' course.course_id t.topic_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
         <div class="d-flex w-100 align-items-center justify-content-between">
+          <a href="{% url 'topic' course.course_id t.topic_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
           <strong class="mb-1">{{ t.name }}</strong>
+          </a>
+        <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteTopic('{{ t.name }}');">
+          {% csrf_token %}
+          <button type="submit" name="delete_topic" id="delete_topic" value="{{ t.topic_id }}"class="btn btn-sm btn-light">🗑️</button>
+        </form>
         </div>
-      </a> 
+
       {% endfor %}
 
       <a href="{% url 'course' course.course_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
@@ -77,6 +82,10 @@
           <div class="p-3 bg-light border rounded">
             {{ el|safe }}
           </div>
+          <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteRevision();">
+            {% csrf_token %}
+            <button type="submit" name="delete_revision" id="delete_revision" value="{{ forloop.counter0 }}" class="btn btn-sm btn-light">Delete Revision</button>
+          </form>
           {% endfor %}
       </div>
     </div>
@@ -123,6 +132,10 @@
   <div class="card shadow-sm border-0">
     <div class="card-header bg-secondary text-white">
       Test
+      <form method="POST" onsubmit="return confirmDeleteTestUnfinished();">
+        {% csrf_token %}
+        <button type="submit" id="delete_test" name="delete_test" class="btn btn-primary" value="{{ test.test_id }}">Delete the test</button>
+      </form>
     </div>
     <form id="testForm" method="POST">
       {% csrf_token %}
@@ -178,6 +191,10 @@
     <div class="card shadow-sm border-0">
       <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Test Completed</h5>
+        <form method="POST" onsubmit="return confirmDeleteTest();">
+          {% csrf_token %}
+          <button type="submit" id="delete_test" name="delete_test" class="btn btn-primary" value="{{ t.test_id }}">Delete the result</button>
+        </form>
         <span class="badge bg-light text-dark">Grade: {{ t.grade }}%</span>
       </div>
       <div class="card-body">
@@ -228,8 +245,21 @@
     </form>
   </div>
 {% endif %}
-  
-  <script>
+<script>
+  function confirmDeleteTopic(name) {
+      return confirm("Are you sure you want to delete the topic " + name + "?");
+  }
+  function confirmDeleteRevision() {
+    return confirm("Are you sure you want to delete this revision?");
+  }
+  function confirmDeleteTestUnfinished() {
+    return confirm("Are you sure you want to delete this unsubmitted test?");
+  }
+  function confirmDeleteTest() {
+    return confirm("Are you sure you want to delete this test result?");
+  }
+</script>
+<script>
     $(document).ready(function() {
         console.log('ready')
         $('#aiForm').on('submit', function(event) {
