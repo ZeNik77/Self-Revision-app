@@ -113,7 +113,8 @@ def courses (request):
                 el.delete()
             for el in tests:
                 el.delete()
-            history.delete()
+            for el in history:
+                el.delete()
             if courses:
                 courses[0].delete()
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm})
