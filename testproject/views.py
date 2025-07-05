@@ -243,25 +243,23 @@ def revise(course, topic_name, topic_description):
     url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
     # content = f"Generate a clear, structured summary in English on the topic \"{topic_name}\" from the course \"{course}\" with the following description: {topic_description}. The summary must include key ideas, important details, and subtle or often overlooked points. Format the output as an HTML unordered list (<ul><li>...</li></ul>) without any additional text or explanations."
 # - Always be formatted as an HTML unordered list: <ul><li>...</li></ul>.
-    content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
+    
+    
+    
+    content = f"""You are a study assistant. Generate a clear, structured summary in English on the topic "{topic_name}" from the course "{course}", using the following description as your reference:
 
 {topic_description}
 
-Your response must follow these rules:
-- Begin the response **exactly** with: "Answer: " (without quotes).
-- Use <b>bold</b> and <i>italic</i> HTML tags to emphasize key terms.
+Your summary must:
+- Always be formatted as a list of points, each starting with “-” and ending with “<br>”.
+- Include both obvious and subtle or often overlooked points.
+- Highlight important terms using <b>bold</b> or <i>italic</i> HTML tags.
 - If your answer contains any mathematical expressions—whether they are full equations or single symbols like "\\nabla f"—**wrap them exactly** in the following block format:
   <div class="latex">YOUR_LATEX_HERE</div>
 - Place LaTeX blocks on their **own line** right after the sentence they relate to. Do not inline LaTeX with normal text.
 - Do not use any other tags, styles, or wrappers for LaTeX.
-- If the question is unrelated to the topic, respond with only: "The question is not related to the specified topic."
-
-Do not include any greetings, introductions, or explanations—return only the direct answer.
-
-Here is the question: {input}
+Do not include any greetings, introductions, or explanations—return only the summary.
 """
-
-
 
     headers = {
         "Content-Type": "application/json",
@@ -278,25 +276,22 @@ Here is the question: {input}
 
 async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
-    content = f"""You are a study assistant. Generate a direct answer in English to a question about "{topic_name}" from the course "{course}", using this reference:
+    content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
 
 {topic_description}
 
-Your response must:
-- Always begin with: Answer:  (no quotes, no variations)<br>
-- If the question is unrelated, reply only with: The question is not related to the specified topic.<br>
-- Never include:<br>
-  - Introductions, apologies, or explanations<br>
-  - Phrases like "according to the material" or "as mentioned"<br>
-- For technical terms, use <b>bold</b> or <i>italic</i> for emphasis<br>
-- For math content:<br>
-  - Wrap every symbol/formula in <div class="latex">...</div><br>
-  - Example: <div class="latex">\\partial</div>, not just ∂<br>
-  - Always place LaTeX on its own line inside the div<br>
-- Format lists with - and line breaks (<br>), like this summary<br>
-- Write only the answer or the unrelated-topic message, nothing else<br>
+Your response must follow these rules:
+- Begin the response **exactly** with: "Answer: " (without quotes).
+- Use <b>bold</b> and <i>italic</i> HTML tags to emphasize key terms.
+- If your answer contains any mathematical expressions—whether they are full equations or single symbols like "\\nabla f"—**wrap them exactly** in the following block format:
+  <div class="latex">YOUR_LATEX_HERE</div>
+- Place LaTeX blocks on their **own line** right after the sentence they relate to. Do not inline LaTeX with normal text.
+- Do not use any other tags, styles, or wrappers for LaTeX.
+- If the question is unrelated to the topic, respond with only: "The question is not related to the specified topic."
 
-Question: {input}
+Do not include any greetings, introductions, or explanations—return only the direct answer.
+
+Here is the question: {input}
 """
     if fileText:
         content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"

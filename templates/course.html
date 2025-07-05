@@ -299,8 +299,10 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="{% static '/js/latex.js' %}"></script>
 <script>
-$(function () {
-    $(".latex").latex();
+$(".latex:not(.latex-processed)").each(function() {
+    $(this).latex();
+    $(this).removeClass("latex");
+    $(this).addClass("latex-processed");
 });
 </script>
   <script src="{% static './js/assistant.js' %}"></script>
