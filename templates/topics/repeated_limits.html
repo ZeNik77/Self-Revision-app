@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block head %}
+    <title>Повторные пределы</title>
+    <link rel="stylesheet" href="{% static './css/topic.css' %}" class="">
+{% endblock %}
+{% block content %}
+    <h1>Повторные пределы</h1>
+
+    <section>
+        <h2>1. Что такое повторные пределы?</h2>
+        <p>Повторные пределы возникают, когда у нас есть функция двух или более переменных, и мы последовательно вычисляем пределы по разным переменным.</p>
+        
+        <div class="important">
+            <p>Для функции двух переменных \( f(x,y) \) существуют <strong>два типа</strong> повторных пределов:</p>
+            <div class="formula">
+                \[ \lim_{x \to a} \left( \lim_{y \to b} f(x,y) \right) \quad \text{и} \quad \lim_{y \to b} \left( \lim_{x \to a} f(x,y) \right) \]
+            </div>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример:</strong></p>
+            <p>Рассмотрим функцию \( f(x,y) = \frac{x-y}{x+y} \). Вычислим два повторных предела в точке (0,0):</p>
+            <div class="formula">
+                \[ \lim_{x \to 0} \left( \lim_{y \to 0} \frac{x-y}{x+y} \right) = \lim_{x \to 0} \frac{x}{x} = 1 \]
+                \[ \lim_{y \to 0} \left( \lim_{x \to 0} \frac{x-y}{x+y} \right) = \lim_{y \to 0} \frac{-y}{y} = -1 \]
+            </div>
+            <p>Получили разные значения (1 и -1), что показывает важность порядка взятия пределов.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Условия равенства повторных пределов</h2>
+        
+        <div class="important">
+            <p>Если:</p>
+            <ol>
+                <li>Существует <strong>двойной предел</strong> \( \lim_{(x,y) \to (a,b)} f(x,y) = L \)</li>
+                <li>Для каждого фиксированного \( x \) существует \( \lim_{y \to b} f(x,y) \)</li>
+                <li>Для каждого фиксированного \( y \) существует \( \lim_{x \to a} f(x,y) \)</li>
+            </ol>
+            <p>Тогда оба повторных предела существуют и равны двойному пределу:</p>
+            <div class="formula">
+                \[ \lim_{x \to a} \left( \lim_{y \to b} f(x,y) \right) = \lim_{y \to b} \left( \lim_{x \to a} f(x,y) \right) = L \]
+            </div>
+        </div>
+        
+        <div class="warning">
+            <p><strong>Важно!</strong> Обратное неверно: из существования и равенства повторных пределов не следует существование двойного предела.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>3. Примеры вычисления повторных пределов</h2>
+        
+        <div class="example">
+            <p><strong>Пример 1 (равные пределы):</strong></p>
+            <p>Функция \( f(x,y) = \frac{x^2 y}{x^2 + y^2} \) в точке (0,0):</p>
+            <div class="formula">
+                \[ \lim_{x \to 0} \left( \lim_{y \to 0} \frac{x^2 y}{x^2 + y^2} \right) = \lim_{x \to 0} 0 = 0 \]
+                \[ \lim_{y \to 0} \left( \lim_{x \to 0} \frac{x^2 y}{x^2 + y^2} \right) = \lim_{y \to 0} 0 = 0 \]
+            </div>
+            <p>Оба повторных предела равны 0, и двойной предел также существует и равен 0.</p>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример 2 (разные пределы):</strong></p>
+            <p>Функция \( f(x,y) = \frac{x^2 - y^2}{x^2 + y^2} \) в точке (0,0):</p>
+            <div class="formula">
+                \[ \lim_{x \to 0} \left( \lim_{y \to 0} \frac{x^2 - y^2}{x^2 + y^2} \right) = \lim_{x \to 0} 1 = 1 \]
+                \[ \lim_{y \to 0} \left( \lim_{x \to 0} \frac{x^2 - y^2}{x^2 + y^2} \right) = \lim_{y \to 0} (-1) = -1 \]
+            </div>
+            <p>Пределы различны, значит, двойной предел не существует.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>4. Связь с непрерывностью</h2>
+        
+        <div class="important">
+            <p>Функция двух переменных непрерывна в точке \( (a,b) \), если:</p>
+            <div class="formula">
+                \[ \lim_{(x,y) \to (a,b)} f(x,y) = f(a,b) \]
+            </div>
+            <p>Для проверки можно использовать повторные пределы:</p>
+            <ol>
+                <li>Убедиться, что оба повторных предела существуют и равны \( f(a,b) \)</li>
+                <li>Проверить существование двойного предела</li>
+            </ol>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример:</strong></p>
+            <p>Функция \( f(x,y) = \begin{cases} 
+            \frac{xy}{x^2 + y^2}, & (x,y) \neq (0,0) \\
+            0, & (x,y) = (0,0)
+            \end{cases} \)</p>
+            <p>Не является непрерывной в (0,0), так как двойной предел не существует (хотя \( f(0,0) = 0 \)).</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>5. Методы вычисления</h2>
+        
+        <div class="important">
+            <p><strong>1. Последовательное вычисление:</strong></p>
+            <p>Сначала вычисляем внутренний предел, затем внешний.</p>
+            
+            <p><strong>2. Переход к полярным координатам:</strong></p>
+            <p>При \( (x,y) \to (0,0) \) делаем замену \( x = r\cos\varphi \), \( y = r\sin\varphi \).</p>
+            <div class="formula">
+                \[ \lim_{r \to 0} f(r\cos\varphi, r\sin\varphi) \]
+            </div>
+            
+            <p><strong>3. Проверка по разным направлениям:</strong></p>
+            <p>Рассматриваем пределы вдоль различных кривых \( y = kx \), \( x = ky^2 \) и т.д.</p>
+        </div>
+        
+        <div class="example">
+            <p><strong>Пример (полярные координаты):</strong></p>
+            <p>Исследуем \( \lim_{(x,y) \to (0,0)} \frac{x^3 y}{x^4 + y^2} \):</p>
+            <div class="formula">
+                \[ x = r\cos\varphi, y = r\sin\varphi \]
+                \[ \frac{r^4 \cos^3\varphi \sin\varphi}{r^4 \cos^4\varphi + r^2 \sin^2\varphi} = \frac{r^2 \cos^3\varphi \sin\varphi}{r^2 \cos^4\varphi + \sin^2\varphi} \]
+            </div>
+            <p>При \( r \to 0 \) предел зависит от \( \varphi \), значит, двойной предел не существует.</p>
+        </div>
+    </section>
+
+    <div class="summary">
+        <h2>Итог:</h2>
+        <p>Повторные пределы — важный инструмент анализа функций многих переменных. Ключевые моменты:</p>
+        <ul>
+            <li>Порядок взятия пределов может влиять на результат</li>
+            <li>Равенство повторных пределов — необходимое, но не достаточное условие существования двойного предела</li>
+            <li>Для проверки существования двойного предела нужно исследовать поведение функции по разным направлениям</li>
+            <li>Методы вычисления включают последовательные пределы, полярные координаты и анализ по направлениям</li>
+        </ul>
+    </div>
+{% endblock %}

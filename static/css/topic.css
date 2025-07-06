@@ -1,0 +1,75 @@
+section, .summary {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+h1 {
+    color: #2c3e50;
+    text-align: center;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+}
+h2 {
+    color: #2980b9;
+    margin-top: 30px;
+    border-left: 4px solid #3498db;
+    padding-left: 10px;
+}
+.example {
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    padding: 10px 15px;
+    margin: 15px 0;
+    border-radius: 0 4px 4px 0;
+}
+.important {
+    background-color: #e8f4fc;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #3498db;
+}
+.formula {
+    font-family: "Times New Roman", Times, serif;
+    color: #d35400;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+.summary {
+    background-color: #eaf7ea;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #27ae60;
+    margin-top: 30px;
+}
+.warning {
+    background-color: #fdecea;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #e74c3c;
+}
+.types {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+.type-card {
+    width: 48%;
+    background-color: #f0f7ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #3498db;
+}
+.type-title {
+    font-weight: bold;
+    color: #2980b9;
+    margin-bottom: 10px;
+    text-align: center;
+}
