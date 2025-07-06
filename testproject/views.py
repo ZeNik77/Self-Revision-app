@@ -138,13 +138,13 @@ def course(request, course_id):
                 while Topic.objects.filter(topic_id=topic_id).exists():
                     topic_id = random.randint(2, 2147483646)
                 Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
-                return redirect(reverse('course', args=(course_id,)))
+                return redirect(reverse('course', args=[course_id]))
             else:
                 print(form.errors)
         if 'delete_topic' in request.POST:
             topic_id = request.POST['delete_topic']
             delete_topic(topic_id)
-            return redirect(reverse('course', args=(course_id)))
+            return redirect(reverse('course', args=[course_id]))
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:

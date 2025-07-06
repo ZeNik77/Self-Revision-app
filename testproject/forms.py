@@ -123,7 +123,7 @@ class AddTopicForm(forms.Form):
         label="Topic Name",
         max_length=100,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class': 'w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200',
             'placeholder': 'Enter topic name',
             'id': 'topic_name'
         })
@@ -132,7 +132,7 @@ class AddTopicForm(forms.Form):
     topic_description = forms.CharField(
         label="Topic content",
         widget=forms.Textarea(attrs={
-            'class': 'form-control',
+            'class': 'w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200',
             'placeholder': 'Enter topic content',
             'rows': 5,
             'id': 'topic_description'
