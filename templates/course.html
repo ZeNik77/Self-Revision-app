@@ -57,7 +57,44 @@
       {% endfor %}
   </div>
 </div>
+
+
 {% if topic %}
+<div class="container mt-5">
+  <form id="aiForm" class="card shadow-sm p-4">
+    {% csrf_token %}
+    <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
+
+      <div class="mb-3">
+        {{ form.non_field_errors }}
+        {{ form.prompt.label_tag }}
+        {{ form.prompt }}
+        <div class="form-check form-switch mb-3">
+          {{ form.internet_toggle }}
+          <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+            {{ form.internet_toggle.label }}
+          </label>
+        </div>
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {{ form.course }}
+        {{ form.course_id }}
+        {{ form.topic_name }}
+        {{ form.topic_description }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+        <span id="loadingText" class="text-muted d-none">
+          ⏳ Generating...
+        </span>
+      </div>
+
+      <div id="aiAnswerBox" class="d-none">
+        <label class="form-label fw-bold">AI Response</label>
+        <div id="aiAnswer" class="p-3 bg-light border rounded"></div>
+      </div>
+    </form>
+</div>
 
 {% if test_form %}
 <div class="col-md-6 mx-auto mb-4">
@@ -188,41 +225,47 @@
 
 <!-- AI Help Popup -->
 <div id="aiPopup" class="fixed bottom-24 right-6 z-50 w-80 max-h-[90vh] overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 hidden flex-col gap-3 transition-all duration-300">
-    <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
+    <h3 class="text-lg font-semibold mb-2">Ask AI</h3>
 
     <!-- Normal Mode -->
     <div id="aiMain" class="flex flex-col gap-3">
-      <form id="aiForm" class="card shadow-sm p-4">
-        {% csrf_token %}
-          <div class="mb-3">
-            {{ form.non_field_errors }}
-            <!-- {{ form.prompt.label_tag }} -->
-            {{ form.prompt }}
-            <!-- <div class="form-check form-switch mb-3">
-              {{ form.internet_toggle }}
-              <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
-                {{ form.internet_toggle.label }}
-              </label>
-            </div>
-            {{ form.file.label_tag }}
-            {{ form.file }} -->
-            {{ form.course }}
-            {{ form.course_id }}
-            {{ form.topic_name }}
-            {{ form.topic_description }}
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
-            <span id="loadingText" class="text-muted d-none">
-              ⏳ Generating...
-            </span>
-          </div>
+        <textarea id="aiQuestion" rows="3" placeholder="Ask your question..." class="w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 text-sm resize-none"></textarea>
 
-          <div id="aiAnswerBox" class="d-none">
-            <label class="form-label fw-bold">AI Response</label>
-            <div id="aiAnswer" class="p-3 bg-light border rounded"></div>
-          </div>
-        </form>
+<div class="container mt-5">
+  <form id="aiForm" class="card shadow-sm p-4">
+    {% csrf_token %}
+    <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
+
+      <div class="mb-3">
+        {{ form.non_field_errors }}
+        {{ form.prompt.label_tag }}
+        {{ form.prompt }}
+        <div class="form-check form-switch mb-3">
+          {{ form.internet_toggle }}
+          <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+            {{ form.internet_toggle.label }}
+          </label>
+        </div>
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {{ form.course }}
+        {{ form.course_id }}
+        {{ form.topic_name }}
+        {{ form.topic_description }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+        <span id="loadingText" class="text-muted d-none">
+          ⏳ Generating...
+        </span>
+      </div>
+
+      <div id="aiAnswerBox" class="d-none">
+        <label class="form-label fw-bold">AI Response</label>
+        <div id="aiAnswer" class="p-3 bg-light border rounded"></div>
+      </div>
+    </form>
+</div>
 
         <div class="flex justify-between items-center">
             <div class="space-x-2">
@@ -239,6 +282,13 @@
                   </div>
                 </form>
             </div>
+            <button id="sendQuestion" class="w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-600 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+            </button>
         </div>
     </div>
 
