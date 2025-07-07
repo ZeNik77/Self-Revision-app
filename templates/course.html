@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+
 <!-- Side-Bar -->
 <div class="flex h-[calc(100vh-4rem)]">
   <aside class="w-64 bg-white border-r overflow-y-auto p-4">
@@ -15,7 +16,6 @@
         <h2 class="text-lg font-semibold">Your Course</h2>
         <button id="openSubtopicModal" class="text-sm text-indigo-600 hover:underline">+ Add</button>
     </div>
-
     <div id="subtopicList" class="space-y-2">
         {% for t in topics %}
         <div class="">
@@ -35,6 +35,12 @@
 
   <!-- main content -->
   <div class="flex-1 p-6 overflow-y-auto">
+      {% if topic and test_error %}
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+          {{ test_error }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
       <h1 class="text-2xl font-bold mb-4">{{ topic.name }}</h1>
       <p class="mb-6 text-gray-600">{{ topic.description }}</p>
 
@@ -95,7 +101,6 @@
       </div>
     </form>
 </div>
-
 {% if test_form %}
 <div class="col-md-6 mx-auto mb-4">
   <div class="card shadow-sm border-0">

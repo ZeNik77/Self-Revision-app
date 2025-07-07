@@ -154,6 +154,7 @@ def course(request, course_id):
 
 
 def topic(request, course_id, topic_id):
+    testError = ''
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() or not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
         return redirect(reverse('courses'))
     else:
@@ -163,14 +164,17 @@ def topic(request, course_id, topic_id):
     if request.method == 'POST':
         # TODO: restrict repeated form submission
         if 'submit_addTest' in request.POST:
-            (test, correct) = generateTest(topic.name, topic.description)
-            test_id = random.randint(2, 2147483646)
-            while Test.objects.filter(test_id=test_id).exists():
+            try:
+                (test, correct) = generateTest(topic.name, topic.description)
                 test_id = random.randint(2, 2147483646)
-            Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
-            for el in Test.objects.filter(topic_id=topic_id, passed=False):
-                if el.test_id != test_id:
-                    el.delete()
+                while Test.objects.filter(test_id=test_id).exists():
+                    test_id = random.randint(2, 2147483646)
+                Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
+                for el in Test.objects.filter(topic_id=topic_id, passed=False):
+                    if el.test_id != test_id:
+                        el.delete()
+            except:
+                testError = 'Error while generating the test. Please try again.'
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
@@ -228,7 +232,7 @@ def topic(request, course_id, topic_id):
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:
