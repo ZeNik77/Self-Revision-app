@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
+from .generate import generate
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
 import requests
@@ -284,17 +285,8 @@ Your summary must:
 Do not include any greetings, introductions, or explanations—return only the summary.
 """
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": [{"role": "user", "content": content}],
-    }
-    response_json = requests.post(url, headers=headers, json=data).json()
-    answer_content = response_json["choices"][0]["message"]["content"]
-    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+
+    answer = generate([{'role': 'user', 'content': content}])
     return answer
 
 async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
@@ -323,18 +315,8 @@ Here is the question: {input}
     except:
         history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
     history.history.append({"role": "user", 'message': input, "content": content})
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": history.history,
-        "web_search": internet_toggle,
-    }
-    response_json = requests.post(url, headers=headers, json=data).json()
-    answer_content = response_json["choices"][0]["message"]["content"]
-    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+    
+    answer = generate(history)
     return answer
 
 async def sendMessage(request):
