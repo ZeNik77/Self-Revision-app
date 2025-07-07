@@ -120,31 +120,42 @@ def courses (request):
     return render (request, "courses.html", { "courses": Courses.objects.filter(user_id=auth.get_user(request).user_id), "form": AddCourseForm})
 def donat(request):
     return render(request, 'donat.html')
-def delete_topic(topic_id):
+
+def add_topic(request, course_id, topic_id=-1):
+    form = AddTopicForm(data=request.POST)
+    if form.is_valid():
+        name = form.cleaned_data['topic_name']
+        description = form.cleaned_data['topic_description']
+        topic_id = random.randint(2, 2147483646)
+        while Topic.objects.filter(topic_id=topic_id).exists():
+            topic_id = random.randint(2, 2147483646)
+        Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
+        if topic_id == -1:
+            return redirect(reverse('course', args=[course_id]))
+        else:
+            return redirect(reverse('topic', args=[course_id, topic_id]))
+    else:
+        print(form.errors)
+def delete_topic(request, course_id, topicId=-1):
+    topic_id = request.POST['delete_topic']
     topic = Topic.objects.filter(topic_id=topic_id)
     tests = Test.objects.filter(topic_id=topic_id)
     for el in tests:
         el.delete()
     if topic:
         topic[0].delete()
+    if topic_id == -1:
+        return redirect(reverse('course', args=[course_id]))
+    else:
+        return redirect(reverse('topic', args=[course_id, topicId]))
 def course(request, course_id):
     if request.method == 'POST':
         if 'add_topic' in request.POST:
-            form = AddTopicForm(data=request.POST)
-            if form.is_valid():
-                name = form.cleaned_data['topic_name']
-                description = form.cleaned_data['topic_description']
-                topic_id = random.randint(2, 2147483646)
-                while Topic.objects.filter(topic_id=topic_id).exists():
-                    topic_id = random.randint(2, 2147483646)
-                Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
-                return redirect(reverse('course', args=(course_id,)))
-            else:
-                print(form.errors)
+            x = add_topic(request, course_id)
+            if x:
+                return x
         if 'delete_topic' in request.POST:
-            topic_id = request.POST['delete_topic']
-            delete_topic(topic_id)
-            return redirect(reverse('course', args=(course_id)))
+            return delete_topic(request, course_id)
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
@@ -154,23 +165,35 @@ def course(request, course_id):
 
 
 def topic(request, course_id, topic_id):
-    if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists() or not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
+    testError = ''
+    if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists():
         return redirect(reverse('courses'))
+    elif not Topic.objects.filter(user_id=auth.get_user(request).user_id, topic_id=topic_id).exists():
+        return redirect(reverse('course', args=[course_id]))
     else:
         course = Courses.objects.get(course_id=course_id)
         topic = Topic.objects.get(topic_id=topic_id)
     
     if request.method == 'POST':
         # TODO: restrict repeated form submission
+        if 'add_topic' in request.POST:
+            x = add_topic(request, course_id, topic_id)
+            if x:
+                return x
+        if 'delete_topic' in request.POST:
+            return delete_topic(request, course_id, topic_id)
         if 'submit_addTest' in request.POST:
-            (test, correct) = generateTest(topic.name, topic.description)
-            test_id = random.randint(2, 2147483646)
-            while Test.objects.filter(test_id=test_id).exists():
+            try:
+                (test, correct) = generateTest(topic.name, topic.description)
                 test_id = random.randint(2, 2147483646)
-            Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
-            for el in Test.objects.filter(topic_id=topic_id, passed=False):
-                if el.test_id != test_id:
-                    el.delete()
+                while Test.objects.filter(test_id=test_id).exists():
+                    test_id = random.randint(2, 2147483646)
+                Test.objects.create(test_id=test_id, user_id=auth.get_user(request).user_id, course_id=course_id, topic_id=topic_id, questions=test, correct=correct, correctQuestions=[], incorrectQuestions=[])
+                for el in Test.objects.filter(topic_id=topic_id, passed=False):
+                    if el.test_id != test_id:
+                        el.delete()
+            except:
+                testError = 'Error while generating the test. Please try again.'
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
@@ -228,7 +251,7 @@ def topic(request, course_id, topic_id):
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:

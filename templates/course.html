@@ -1,137 +1,199 @@
 {% extends "base.html" %}
 {% load static %}
 
-
 {% block head %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous"> -->
 {% endblock %}
 
 {% block content %}
-<!-- <div class="d-flex"> -->
 
-  <!-- Side-Bar -->
-  <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary absolute" style="width: 240px; height: 100%;">
-    <div class="list-group list-group-flush border-bottom scrollarea">
+<!-- Side-Bar -->
+<div class="flex h-[calc(100vh-4rem)]">
+  <aside class="w-64 bg-white border-r overflow-y-auto p-4">
 
-      {% for t in topics %}
-        <div class="d-flex w-100 align-items-center justify-content-between">
-          <a href="{% url 'topic' course.course_id t.topic_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
-          <strong class="mb-1">{{ t.name }}</strong>
-          </a>
-        <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteTopic('{{ t.name }}');">
-          {% csrf_token %}
-          <button type="submit" name="delete_topic" id="delete_topic" value="{{ t.topic_id }}"class="btn btn-sm btn-light">🗑️</button>
-        </form>
-        </div>
-
-      {% endfor %}
-
-      <a href="{% url 'course' course.course_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
-        <div class="d-flex w-100 align-items-center justify-content-between">
-          <strong class="mb-1">Create a topic</strong>
-        </div>
-      </a> 
-      <a href="{% url 'courses'%}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
-        <div class="d-flex w-100 align-items-center justify-content-between">
-          <strong class="mb-1">Back to the Courses</strong>
-        </div>
-      </a> 
-      <!--
-      <a href="./topics/curved_integrals" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
-        <div class="d-flex w-100 align-items-center justify-content-between">
-          <strong class="mb-1">Криволинейные интегралы</strong>
-        </div>
-      </a> 
-      -->
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Your Course</h2>
+        <button id="openSubtopicModal" class="text-sm text-indigo-600 hover:underline">+ Add</button>
     </div>
+    <div id="subtopicList" class="space-y-2">
+        {% for t in topics %}
+          <div class="px-3 py-2 rounded hover:bg-gray-100 bg-gray-50">
+            <a href="{% url 'topic' course.course_id t.topic_id %}" class="list-group-item list-group-item-action py-3 lh-sm" aria-current="true">
+              {{ t.name }}
+            </a>
+            <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteTopic('{{ t.name }}');">
+              {% csrf_token %}
+              <button type="submit" name="delete_topic" id="delete_topic" value="{{ t.topic_id }}" class="btn btn-sm btn-light">🗑️</button>
+            </form>
+          </div>
+        {% endfor %}
+    </div>
+  </aside>
+
+  <!-- main content -->
+  <div class="flex-1 p-6 overflow-y-auto">
+      {% if topic and test_error %}
+        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+          {{ test_error }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+      <h1 class="text-2xl font-bold mb-4">{{ topic.name }}</h1>
+      <p class="mb-6 text-gray-600">{{ topic.description }}</p>
+
+      <!-- <label for="editor" class="block text-sm font-medium text-gray-700 mb-1">Course content:</label>
+      <textarea id="editor" rows="12" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-200"></textarea> -->
+
+      {% for el in revisions %}
+        <div class="card mt-3">
+          <div class="card-header">
+            Topic Summary {{ forloop.counter }}
+          </div>
+          <div class="card-body">
+            {{ el|safe }}
+          </div>
+        </div>
+        <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteRevision();">
+          {% csrf_token %}
+          <button type="submit" name="delete_revision" id="delete_revision" value="{{ forloop.counter0 }}" class="btn btn-sm btn-light">Delete Revision</button>
+        </form>
+      {% endfor %}
   </div>
+</div>
+
+
 {% if topic %}
-<div class="flex-grow-1 p-3">
-  <div class="col-md-6 mx-auto mb-4">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">{{ topic.name }}</h5>
-        <span class="badge bg-light text-dark">{{ course.name }}</span>
+<!-- <div class="container mt-5">
+  <form id="aiForm" class="card shadow-sm p-4">
+    {% csrf_token %}
+    <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
+
+      <div class="mb-3">
+        {{ form.non_field_errors }}
+        {{ form.prompt.label_tag }}
+        {{ form.prompt }}
+        <div class="form-check form-switch mb-3">
+          {{ form.internet_toggle }}
+          <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+            {{ form.internet_toggle.label }}
+          </label>
+        </div>
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {{ form.course }}
+        {{ form.course_id }}
+        {{ form.topic_name }}
+        {{ form.topic_description }}
       </div>
-      <div class="card-body">
-        <p class="card-text">
-          {{ topic.description }}
-        </p>
-        <div class="row">
-          <div class="col-auto">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+        <span id="loadingText" class="text-muted d-none">
+          ⏳ Generating...
+        </span>
+      </div>
+
+      <div id="aiAnswerBox" class="d-none">
+        <label class="form-label fw-bold">AI Response</label>
+        <div id="aiAnswer" class="p-3 bg-light border rounded"></div>
+      </div>
+    </form>
+</div> -->
+<!-- floating AI Button -->
+<button id="openAIPopup"
+    class="fixed bottom-6 right-6 z-50 px-4 h-14 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 focus:outline-none flex items-center justify-center text-sm font-medium">
+    AI Help
+</button>
+
+<!-- AI Help Popup -->
+<div id="aiPopup" class="fixed bottom-24 right-6 z-50 w-[40rem] max-h-[90vh] overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 hidden flex-col gap-3 transition-all duration-300">
+    <h3 class="text-lg font-semibold mb-2">Ask AI</h3>
+
+    <!-- Normal Mode -->
+    <div id="aiMain" class="flex flex-col gap-3">
+
+<div class="container mt-5">
+  <form id="aiForm" class="card shadow-sm p-4">
+    {% csrf_token %}
+    <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
+
+      <div class="mb-3">
+        {{ form.non_field_errors }}
+        {{ form.prompt.label_tag }}
+        {{ form.prompt }}
+        <div class="form-check form-switch mb-3">
+          {{ form.internet_toggle }}
+          <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
+            {{ form.internet_toggle.label }}
+          </label>
+        </div>
+        {{ form.file.label_tag }}
+        {{ form.file }}
+        {{ form.course }}
+        {{ form.course_id }}
+        {{ form.topic_name }}
+        {{ form.topic_description }}
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
+        <span id="loadingText" class="text-muted d-none">
+          ⏳ Generating...
+        </span>
+      </div>
+
+      <div id="aiAnswerBox" class="d-none">
+        <label class="form-label fw-bold">AI Response</label>
+        <div id="aiAnswer" class="p-3 bg-light border rounded"></div>
+      </div>
+    </form>
+</div>
+
+    <div class="flex justify-between items-center">
+        <div class="space-x-2">
             <form id="generateTestForm" method="POST">
               {% csrf_token %}
               <div class="mb-3">
-                <button type="submit" name="submit_addTest" id="submit_test" class="btn btn-success">Generate test on the topic</button>
+                <button type="submit" name="submit_addTest" id="submit_test" class="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">Test</button>
               </div>
             </form>
-          </div>
-          <div class="col-auto">
             <form id="addRevisionForm" method="POST">
               {% csrf_token %}
               <div class="mb-1">
-                <button type="submit" name="submit_revision" id="submit_revision" class="btn btn-success">Revise</button>
+                <button type="submit" name="submit_revision" id="submit_revision" class="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">Revise</button>
               </div>
             </form>
-          </div>
         </div>
-          {% for el in revisions %}
-            <div class="card mt-3">
-              <div class="card-header">
-                Topic Summary {{ forloop.counter }}
-              </div>
-              <div class="card-body">
-                {{ el|safe }}
-              </div>
-            </div>
-          <form method="post" class="d-inline ms-1" onsubmit="return confirmDeleteRevision();">
-            {% csrf_token %}
-            <button type="submit" name="delete_revision" id="delete_revision" value="{{ forloop.counter0 }}" class="btn btn-sm btn-light">Delete Revision</button>
-          </form>
-          {% endfor %}
-      </div>
+        <!-- <a href="https://pornhub.com"> -->
+        <!-- <a href="#">
+          <button id="sendQuestion" class="w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-600 flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+        </button>
+        </a> -->
     </div>
   </div>
+
+    <!-- Test Setup -->
+    <div id="testSetup" class="hidden flex flex-col gap-3">
+        <label class="text-sm font-medium">What to test?</label>
+        <select id="testTarget" class="w-full border rounded p-2 text-sm">
+            <option value="course">Whole Course</option>
+            {% for sub in subtopics %}
+            <option value="sub_{{ sub.id }}">{{ sub.name }}</option>
+            {% endfor %}
+        </select>
+        <button id="startTest" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">Start Test</button>
+    </div>
+
+    <!-- Test Questions -->
+    <div id="testContainer" class="hidden">
+        <!-- Filled dynamically -->
+    </div>
 </div>
-  <div class="container mt-5">
-      <form id="aiForm" class="card shadow-sm p-4">
-        {% csrf_token %}
-        <h4 class="mb-3 text-primary">Ask AI a question on the topic</h4>
 
-          <div class="mb-3">
-            {{ form.non_field_errors }}
-            {{ form.prompt.label_tag }}
-            {{ form.prompt }}
-            <div class="form-check form-switch mb-3">
-              {{ form.internet_toggle }}
-              <label class="form-check-label" for="{{ form.toggle.id_for_label }}">
-                {{ form.internet_toggle.label }}
-              </label>
-            </div>
-            {{ form.file.label_tag }}
-            {{ form.file }}
-            {{ form.course }}
-            {{ form.course_id }}
-            {{ form.topic_name }}
-            {{ form.topic_description }}
-          </div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <button type="submit" id="submitBtn" class="btn btn-success">Submit</button>
-            <span id="loadingText" class="text-muted d-none">
-              ⏳ Generating...
-            </span>
-          </div>
-
-          <div id="aiAnswerBox" class="d-none">
-            <label class="form-label fw-bold">AI Response</label>
-            <div id="aiAnswer" class="p-3 bg-light border rounded">ХУИ
-            </div>
-          </div>
-        </form>
-  </div>
-<!-- </div> -->
 {% if test_form %}
 <div class="col-md-6 mx-auto mb-4">
   <div class="card shadow-sm border-0">
@@ -170,7 +232,7 @@
   </div>
 </div>  
 {% endif %}
-  <div class="ai-assistant">
+  <!-- <div class="ai-assistant">
     <button class="ai-button" id="aiButton">AI</button>
 
     <div class="d-none ai-window" id="aiWindow">
@@ -190,7 +252,8 @@
         <button class="ai-send" id="aiSend">-></button>
       </div>
     </div>
-  </div>
+  </div> -->
+
   {% for t in passed_tests %}
   <div class="container mt-5">
     <div class="card shadow-sm border-0">
@@ -230,28 +293,139 @@
     </div>
   </div>
   {% endfor %}
-
-{% else %}
-  <div class="flex-grow-1 p-3">
-  <div class="container mt-5">
-    <form id="addTopicForm" class="card shadow-sm p-4" method="POST">
-      {% csrf_token %}
-      <h4 class="mb-3 text-primary">Add topic</h4>
-
-      <div class="mb-3">
-        {{ addTopicForm.non_field_errors }}
-        {{ addTopicForm.topic_name.label }}
-        {{ addTopicForm.topic_name }}
-        {{ addTopicForm.topic_description.label }}
-        {{ addTopicForm.topic_description }}
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <button type="add_topic" name="add_topic" id="add_topic" class="btn btn-success">Submit</button>
-      </div>
-    </form>
-  </div>
-  </div>
 {% endif %}
+
+<div id="subtopicModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-80">
+        <h3 class="text-lg font-semibold mb-4">Add Subtopic</h3>
+        <form method="POST">
+            {% csrf_token %}
+            {{ addTopicForm.non_field_errors }}
+            {{ addTopicForm.topic_name.label }}
+            {{ addTopicForm.topic_name }}
+            {{ addTopicForm.topic_description.label }}
+            {{ addTopicForm.topic_description }}
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="cancelModal" class="px-4 py-2 text-sm text-gray-600">Cancel</button>
+                <button type="submit" name="add_topic" id="add_topic" class="px-4 py-2 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700">
+                    Add
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+  document.getElementById("openSubtopicModal").onclick = () => {
+      document.getElementById("subtopicModal").classList.remove("hidden");
+      document.getElementById("subtopicModal").classList.add("flex");
+  };
+  document.getElementById("cancelModal").onclick = () => {
+      document.getElementById("subtopicModal").classList.add("hidden");
+  };
+
+  const aiPopup = document.getElementById("aiPopup");
+  const aiMain = document.getElementById("aiMain");
+  const testSetup = document.getElementById("testSetup");
+  const testContainer = document.getElementById("testContainer");
+
+  document.getElementById("openAIPopup").onclick = () => {
+      aiPopup.classList.toggle("hidden");
+  };
+
+  // нужно заменить на API
+  let questions = [];
+  let currentQuestionIndex = 0;
+  let answers = [];
+
+  document.getElementById("generateTestBtn").onclick = () => {
+      aiMain.classList.add("hidden");
+      testSetup.classList.remove("hidden");
+  };
+
+  document.getElementById("startTest").onclick = () => {
+  // примеры вопросов просто
+  questions = [
+      { q: "What is Python?", options: ["A snake", "A programming language", "A dance move"], correct: 1 },
+      { q: "What is Django?", options: ["A movie", "A framework", "A drink"], correct: 1 }
+  ];
+      answers = new Array(questions.length).fill(null);
+      currentQuestionIndex = 0;
+
+      testSetup.classList.add("hidden");
+      testContainer.classList.remove("hidden");
+      renderQuestion();
+  };
+
+  function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+      testContainer.innerHTML = `
+          <div class="space-y-3">
+              <div class="text-sm font-medium">Question ${currentQuestionIndex + 1} of ${questions.length}</div>
+              <div class="text-base font-semibold">${q.q}</div>
+              ${q.options.map((opt, i) => `
+                  <label class="block">
+                      <input type="radio" name="option" value="${i}" class="mr-2" ${answers[currentQuestionIndex] === i ? 'checked' : ''}>
+                      ${opt}
+                  </label>
+              `).join('')}
+              <div class="flex justify-between mt-4">
+                  <button ${currentQuestionIndex === 0 ? 'disabled' : ''} onclick="prevQuestion()" class="text-sm text-gray-500 hover:underline">Back</button>
+                  <button onclick="nextQuestion()" class="text-sm text-indigo-600 hover:underline">${currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next'}</button>
+              </div>
+          </div>
+      `;
+  }
+
+  function prevQuestion() {
+      currentQuestionIndex--;
+      renderQuestion();
+  }
+
+  function nextQuestion() {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (selected) {
+          answers[currentQuestionIndex] = parseInt(selected.value);
+          if (currentQuestionIndex < questions.length - 1) {
+              currentQuestionIndex++;
+              renderQuestion();
+          } else {
+              showResults();
+          }
+      } else {
+          alert("Please select an answer.");
+      }
+  }
+
+  function showResults() {
+    let correct = 0;
+    testContainer.innerHTML = `<div class="mb-4 text-lg font-bold">Test Results</div>`;
+    questions.forEach((q, i) => {
+        const isCorrect = answers[i] === q.correct;
+        if (isCorrect) correct++;
+        testContainer.innerHTML += `
+            <div class="mb-2">
+                <div class="font-semibold">${i + 1}. ${q.q}</div>
+                <div class="${isCorrect ? 'text-green-600' : 'text-red-600'} text-sm">
+                    Your answer: ${q.options[answers[i]] || '—'} ${isCorrect ? '✔️' : `✖️ (Correct: ${q.options[q.correct]})`}
+                </div>
+            </div>
+        `;
+    });
+    testContainer.innerHTML += `
+        <div class="mt-4 font-semibold">
+            Score: ${correct} / ${questions.length}
+        </div>
+        <button onclick="restartAI()" class="mt-4 text-sm text-indigo-600 hover:underline">Back to Assistant</button>
+    `;
+  }
+
+  function restartAI() {
+      testContainer.classList.add("hidden");
+      aiMain.classList.remove("hidden");
+  }
+</script>
+
 <script>
   function confirmDeleteTopic(name) {
       return confirm("Are you sure you want to delete the topic " + name + "?");
@@ -266,38 +440,41 @@
     return confirm("Are you sure you want to delete this test result?");
   }
 </script>
+
 <script>
-    $(document).ready(function() {
-        console.log('ready')
-        $('#aiForm').on('submit', function(event) {
-            event.preventDefault();
-            $('#courseText').val('{{ course.name }}')
-            $('#topic_nameText').val('{{ topic.name }}')
-            $('#course_idText').val('{{ course.course_id }}')
-            $('#topic_descriptionText').val('{{ topic.description }}')
-            formData = new FormData(this);
-            $('#loadingText').removeClass('d-none');
-            $.ajax({
-                url: '{% url "sendMessage" %}',
-                type: 'POST',
-                contentType: false,
-                processData: false,
-                data: formData,
-                success: function(response) {
-                    $('#loadingText').addClass('d-none');
-                    $('#aiAnswerBox').removeClass('d-none');
-                    $('#fileInput').val('');   
-                    $('#aiAnswer').html(response.message);
-                    $(function () {
-                      $(".latex").latex();
-                    });
-                }
-            });
-        });
-    });
-  </script>
+  $(document).ready(function() {
+      console.log('ready')
+      $('#aiForm').on('submit', function(event) {
+          event.preventDefault();
+          $('#courseText').val('{{ course.name }}')
+          $('#topic_nameText').val('{{ topic.name }}')
+          $('#course_idText').val('{{ course.course_id }}')
+          $('#topic_descriptionText').val('{{ topic.description }}')
+          formData = new FormData(this);
+          $('#loadingText').removeClass('d-none');
+          $.ajax({
+              url: '{% url "sendMessage" %}',
+              type: 'POST',
+              contentType: false,
+              processData: false,
+              data: formData,
+              success: function(response) {
+                  $('#loadingText').addClass('d-none');
+                  $('#aiAnswerBox').removeClass('d-none');
+                  $('#fileInput').val('');   
+                  $('#aiAnswer').html(response.message);
+                  $(function () {
+                    $(".latex").latex();
+                  });
+              }
+          });
+      });
+  });
+</script>
+
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="{% static '/js/latex.js' %}"></script>
+
 <script>
 $(".latex:not(.latex-processed)").each(function() {
     $(this).latex();
@@ -305,7 +482,6 @@ $(".latex:not(.latex-processed)").each(function() {
     $(this).addClass("latex-processed");
 });
 </script>
-  <script src="{% static './js/assistant.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
 
+<script src="{% static './js/assistant.js' %}"></script>
 {% endblock %}
