@@ -289,8 +289,7 @@ Do not include any greetings, introductions, or explanations—return only the s
     answer = generate([{'role': 'user', 'content': content}])
     return answer
 
-async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
-    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
+def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
 
 {topic_description}
@@ -311,15 +310,15 @@ Here is the question: {input}
     if fileText:
         content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"
     try:
-        history = await CourseChatHistory.objects.aget(course_id=course_id)
+        history = CourseChatHistory.objects.get(course_id=course_id)
     except:
-        history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
+        history = CourseChatHistory.objects.create(course_id=course_id, history=[])
     history.history.append({"role": "user", 'message': input, "content": content})
-    
-    answer = generate(history)
+    history.save() 
+    answer = generate(history.history)
     return answer
 
-async def sendMessage(request):
+def sendMessage(request):
     if request.method == 'POST':
         form = AIForm(request.POST, request.FILES)
         if form.is_valid():
@@ -336,7 +335,7 @@ async def sendMessage(request):
                     fileText += chunk.decode('utf-8')
             else:
                 fileText = ''
-            answer = await deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
+            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
             return JsonResponse({'message': answer})
         else:
             return JsonResponse({'message': form.errors})
