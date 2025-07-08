@@ -14,6 +14,9 @@ import requests
 import random
 import asyncio
 
+def profile(request):
+    return render(request, 'profile.html')
+
 def index(request):
     # processing POST request
     if request.method == 'POST':
