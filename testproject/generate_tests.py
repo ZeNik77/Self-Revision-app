@@ -1,30 +1,14 @@
 import requests
 import json
 import random
+from .generate import generate
 
 def generateTest(topic_name, topic_description):
     jsonString = '[{"question": "Question text", "answer": ["Correct answer", "Wrong answer 1", "Wrong answer 2"]}, ...]'
     content = "Generate a 5 single-choice questions test on the topic \""+topic_name+"\" with the content \""+topic_description+"\". Format your answer strictly as a valid JSON array in a single line, like this: "+jsonString+"Do not add any commentary, preamble, or explanation. Your response must be a single JSON string without any line breaks or \ escape characters. The first answer in each array must be the correct one."
-    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": [
-            {
-                "role": "user",
-                "content": content
-            }
-        ]
-    }
-
-    response = requests.post(url, headers=headers, json=data)
     
-    # return json.loads(response.json()["choices"][0]["message"]["content"])
-    test = json.loads(response.json()["choices"][0]["message"]["content"].split('</think>\n')[1])
+    generated = generate([{"role": "user", "content": content}])
+    test = json.loads(generated)
     correct = []
     for i in range(len(test)):
         q = test[i]

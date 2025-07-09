@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
+from .generate import generate
 from g4f.client import Client
 from g4f.gui.server.internet import get_search_message
 import requests
@@ -284,21 +285,11 @@ Your summary must:
 Do not include any greetings, introductions, or explanations—return only the summary.
 """
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": [{"role": "user", "content": content}],
-    }
-    response_json = requests.post(url, headers=headers, json=data).json()
-    answer_content = response_json["choices"][0]["message"]["content"]
-    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+
+    answer = generate([{'role': 'user', 'content': content}])
     return answer
 
-async def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
-    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
+def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
     content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
 
 {topic_description}
@@ -319,25 +310,15 @@ Here is the question: {input}
     if fileText:
         content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"
     try:
-        history = await CourseChatHistory.objects.aget(course_id=course_id)
+        history = CourseChatHistory.objects.get(course_id=course_id)
     except:
-        history = await CourseChatHistory.objects.acreate(course_id=course_id, history=[])
+        history = CourseChatHistory.objects.create(course_id=course_id, history=[])
     history.history.append({"role": "user", 'message': input, "content": content})
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    data = {
-        "model": "deepseek-ai/DeepSeek-R1",
-        "messages": history.history,
-        "web_search": internet_toggle,
-    }
-    response_json = requests.post(url, headers=headers, json=data).json()
-    answer_content = response_json["choices"][0]["message"]["content"]
-    answer = answer_content.split('</think>\n')[1] if '</think>\n' in answer_content else answer_content
+    history.save() 
+    answer = generate(history.history)
     return answer
 
-async def sendMessage(request):
+def sendMessage(request):
     if request.method == 'POST':
         form = AIForm(request.POST, request.FILES)
         if form.is_valid():
@@ -354,7 +335,7 @@ async def sendMessage(request):
                     fileText += chunk.decode('utf-8')
             else:
                 fileText = ''
-            answer = await deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
+            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
             return JsonResponse({'message': answer})
         else:
             return JsonResponse({'message': form.errors})
