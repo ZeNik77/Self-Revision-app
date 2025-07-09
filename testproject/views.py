@@ -1,6 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from openai import OpenAI
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
@@ -8,11 +7,7 @@ from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, T
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
 from .generate import generate
-from g4f.client import Client
-from g4f.gui.server.internet import get_search_message
-import requests
 import random
-import asyncio
 
 def index(request):
     # processing POST request
