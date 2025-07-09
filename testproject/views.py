@@ -3,10 +3,11 @@ from django.shortcuts import render
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
+from django.core.files.storage import FileSystemStorage
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate_tests import generateTest
-from .generate import generate
+from .generate import generate, generate_with_rag
 import random
 
 def index(request):
@@ -284,7 +285,7 @@ Do not include any greetings, introductions, or explanations—return only the s
     answer = generate([{'role': 'user', 'content': content}])
     return answer
 
-def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
+def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path):
     content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
 
 {topic_description}
@@ -302,15 +303,19 @@ Do not include any greetings, introductions, or explanations—return only the d
 
 Here is the question: {input}
 """
-    if fileText:
-        content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"
     try:
         history = CourseChatHistory.objects.get(course_id=course_id)
     except:
         history = CourseChatHistory.objects.create(course_id=course_id, history=[])
     history.history.append({"role": "user", 'message': input, "content": content})
     history.save() 
-    answer = generate(history.history)
+    if file_path:
+        new_history, answer = generate_with_rag(history.history, file_path)
+        history.history = new_history
+    else:
+        answer = generate(history.history)
+    history.history.append({'role': 'assistant', 'content': answer})
+    history.save()
     return answer
 
 def sendMessage(request):
@@ -323,14 +328,12 @@ def sendMessage(request):
             topic_name = form.cleaned_data['topic_name']
             topic_description = form.cleaned_data['topic_description']
             internet_toggle = form.cleaned_data['internet_toggle']
+            file_path = ''
             if form.cleaned_data['file']:
-                fileText = ''
                 uploaded_file = form.cleaned_data['file']
-                for chunk in uploaded_file.chunks():
-                    fileText += chunk.decode('utf-8')
-            else:
-                fileText = ''
-            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
+                fs = FileSystemStorage()
+                file_path = fs.save(uploaded_file.name, uploaded_file)
+            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
             return JsonResponse({'message': answer})
         else:
             return JsonResponse({'message': form.errors})
