@@ -4,6 +4,7 @@ const add_course = document.getElementById('add_course');
 const modal = document.getElementById('crud-modal');
 const close_modal = document.getElementById('close-menu');
 
+
 const mobile_menu = document.getElementById('mobile-menu');
 const sandwich = document.getElementById('sandwich');
 
