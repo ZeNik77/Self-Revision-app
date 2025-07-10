@@ -168,10 +168,10 @@ def add_outline(request, course_id):
         uploaded_file = form.cleaned_data['file']
         fs = FileSystemStorage()
         file_path = fs.save(uploaded_file.name, uploaded_file)
-        try:
-            divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
-        except Exception as e:
-            print('=====\n', e, '\n=====')
+        # try:
+        divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
+        # except Exception as e:
+        #     print('=====\n', e, '\n=====')
         return redirect(reverse('course', args=(course_id,)))
     else:
         print(form.errors)
@@ -253,6 +253,8 @@ def topic(request, course_id, topic_id):
             test_id = request.POST['delete_test']
             if (test := Test.objects.filter(test_id=test_id)).exists():
                 test.delete()
+        if 'add_topics_file' in request.POST:
+            add_outline(request, course_id)
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
@@ -263,7 +265,7 @@ def topic(request, course_id, topic_id):
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:

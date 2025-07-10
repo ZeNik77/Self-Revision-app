@@ -12,7 +12,10 @@ from .settings import MEDIA_ROOT
 from .models import CourseChatHistory, Topic, Courses
 import openai
 import fitz
+import hashlib
 
+def text_hash(text):
+    return hashlib.md5(text.encode("utf-8")).hexdigest()
 # url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
 # headers = {
 #     "Content-Type": "application/json",
@@ -34,63 +37,85 @@ import fitz
 embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2")
 
 def remove_images(input_pdf):
-    # Load PDF
-    doc = fitz.open(input_pdf)
+    doc = fitz.open(fullPath(input_pdf))
 
-    # Delete all images on all pages
     for page in doc:
         img_list = page.get_images(full=True)
         for img in img_list:
             xref = img[0]
             page.delete_image(xref)
 
-    # Create a new file name
-    base, ext = os.path.splitext(input_pdf)
-    output_pdf = f"{base}_no_images{ext}"
+    # Save to a temporary file
+    temp_output = input_pdf + ".temp"
+    doc.save(fullPath(temp_output), garbage=4, deflate=True)
+    # Important: release file handle
+    doc.close()
+    # Now replace
+    os.replace(fullPath(temp_output), fullPath(input_pdf))
+    fs = FileSystemStorage()
+    fs.delete(temp_output)
+    return input_pdf
 
-    # Save cleaned PDF (compress and remove unused objects)
-    doc.save(output_pdf, garbage=4, deflate=True)
-
-    # Return new file path
-    return output_pdf
+def fullPath(path):
+    return os.path.join(MEDIA_ROOT, path)
 
 def load_and_chunk_documents(og_file_path, delete=False):
-    file_path = os.path.join(MEDIA_ROOT, og_file_path)
-    deleted = False
-    if file_path.endswith('.pdf'):
-        # file_path = remove_images(file_path)
-        # fs = FileSystemStorage()
-        # fs.delete(og_file_path)
-        loader = PyPDFLoader(file_path)
-        # deleted = True
-    else:  # txt, md, etc.
-        loader = TextLoader(file_path)
-    
-    pages = loader.load()
-    if delete and not deleted:
-        fs = FileSystemStorage()
-        fs.delete(og_file_path)
+    try:
+        if og_file_path.endswith('.pdf'):
+            remove_images(og_file_path)
+            loader = PyPDFLoader(fullPath(og_file_path))
+        else:  # txt, md, etc.
+            loader = TextLoader(fullPath(og_file_path))
+        
+        pages = loader.load()
+        if delete:
+            fs = FileSystemStorage()
+            fs.delete(og_file_path)
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
-        separators=["\n\n", "\n", ".", " "]
-    )
-    return text_splitter.split_documents(pages)
-
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=50,
+            separators=["\n\n", "\n", ".", " "]
+        )
+        return text_splitter.split_documents(pages)
+    except:
+        print('WARNING: load_chunk_documents() returns None')
+        return None
 # --- Vector Store Management ---
-def create_or_load_vector_store(chunks, save_path="faiss_index"):
-    # if os.path.exists(save_path):
-    #     return FAISS.load_local(save_path, embeddings, allow_dangerous_deserialization=True)
-    # else:
+def create_vector_store(chunks, save_path):
+    save_path = os.path.join(save_path, 'faiss_index')
     vector_store = FAISS.from_documents(chunks, embeddings)
     vector_store.save_local(save_path)
     return vector_store
 
 
-def generate_with_rag(history, path, delete=False):
+def create_or_unify_vector_store(chunks, save_path):
+    save_path = os.path.join(save_path, 'faiss_index')
+    if chunks:
+        vector_store = FAISS.from_documents(chunks, embeddings)
+    if os.path.exists(save_path):
+        unified = FAISS.load_local(save_path, embeddings, allow_dangerous_deserialization=True)
+        if chunks:
+            unified.merge_from(vector_store)
+        return unified
+    elif chunks:
+        vector_store.save_local(save_path)
+        return vector_store
+    else:
+        print('create_or_unify_vector_store() went to shit')
+def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, delete=False, save=True):
     chunks = load_and_chunk_documents(path, delete)
-    vector_store = create_or_load_vector_store(chunks)
+    if topic_id != -1:
+        faiss_path = f'topic_faiss/{topic_id}'
+    elif course_id != -1:
+        faiss_path = f'course_faiss/{course_id}'
+    else:
+        print('Provide either topic_id or course_id')
+        return None
+    if unified:
+        vector_store = create_or_unify_vector_store(chunks, faiss_path)
+    else:
+        vector_store = create_vector_store(chunks, faiss_path)
     # Extract last user question
     last_message = [m for m in history if m['role'] == 'user'][-1]
     query = last_message['content']
@@ -107,7 +132,7 @@ def generate_with_rag(history, path, delete=False):
     # Augment the prompt
     rag_prompt = {
         "role": "system",
-        "content": f"""Answer ONLY using the context below. If you don’t find enough information, reply: 'I don't know.' Do NOT add any extra knowledge.
+        "content": f"""Answer ONLY using the context below. If you don’t find enough information, reply EXACTLY: 'FOUND NOTHING' (without the quotations). Do NOT add any extra knowledge.
 
         
         Context:
@@ -116,7 +141,10 @@ def generate_with_rag(history, path, delete=False):
         Current conversation:"""
     }
     augmented_history = [rag_prompt] + history
-    return (augmented_history, generate(augmented_history))
+    res = generate(augmented_history)
+    if not save:
+        augmented_history = history
+    return (augmented_history, res)
 
 
 def generate(history):
@@ -207,7 +235,7 @@ Here is the question: {input}
     history.history.append({"role": "user", 'message': input, "content": content})
     history.save() 
     if file_path:
-        new_history, answer = generate_with_rag(history.history, file_path, delete=True)
+        new_history, answer = generate_with_rag(history.history, file_path, topic_id=topic_name, delete=True, unified=True, save=False)
         history.history = new_history
     else:
         answer = generate(history.history)
@@ -247,29 +275,32 @@ Guidelines:
 **Here is the course content:**
 '''
     topics = []
-    print('here-1')
-    try:
-        hist, x = generate_with_rag([{'role': 'user', 'content': content}], path)
-        print('here', x)
-        topics = json.loads(x)
-    except Exception as e:
-        print('=====\n', x, '\n=====')
-        print('=====\n', e, '\n=====')
-        topics = []
-    print('here2')
-    print(x)
+    # print('here-1')
+    # try:
+    att = 1
+    print('Dividing: Attempt', att)
+    hist, x = generate_with_rag([{'role': 'user', 'content': content}], path, course_id=course_id, delete=True)
+    while 'FOUND NOTHING' in x:
+        att += 1
+        print('Dividing: Attempt', att)
+        hist, x = generate_with_rag([{'role': 'user', 'content': content}], '', course_id=course_id, unified=True)
+    print('topics found', x)
+    topics = json.loads(x)
+    # except Exception as e:
+    #     print('=====\n', x, '\n=====')
+    #     print('=====\n', e, '\n=====')
+    #     # topics = []
+    #     raise e
+    print('json parsed')
     if topics:
         for topic in topics:
-            topic_id = random.randint(2, 2147483646)
-            while Topic.objects.filter(topic_id=topic_id).exists():
-                topic_id = random.randint(2, 2147483646)
             name = topic.capitalize()
+            print('processing topic "', name, '"', sep='')
             course = Courses.objects.get(course_id=course_id).name
             # content2 = f"Summarize the following information about the topic \"{name}\" into a clear, structured summary using bullet points. Focus only on what’s in the supplied material. Do NOT add any extra content or assumptions."
             content2 = f"""You are a study assistant. Generate a clear, structured summary in English about the topic "{name}" from the course "{course}".
 
 Your summary must:
-- Always be formatted as a list of points, each starting with “-” and ending with “<br>”.
 - Include both obvious and subtle or often overlooked details.
 - Highlight important terms using <b>bold</b> or <i>italic</i> HTML tags.
 - If your answer contains any mathematical expressions—whether they are full equations or single symbols like "\\nabla f"—wrap them exactly in the following block format:
@@ -280,8 +311,12 @@ Your summary must:
 Write only the formatted summary without any introductions, conclusions, or extra explanations.
 """
             hist = [{"role": "user", "content": content2}]
-            description = (generate_with_rag(hist, path))[1]
+            description = (generate_with_rag(hist, '', course_id=course_id, unified=True))[1]
+            if 'FOUND NOTHING' in description:
+                print(f'Found nothing on topic "{name}"')
+                continue
+            topic_id = random.randint(2, 2147483646)
+            while Topic.objects.filter(topic_id=topic_id).exists():
+                topic_id = random.randint(2, 2147483646)
             Topic.objects.create(user_id=user_id, course_id=course_id, topic_id=topic_id, name=name, description=description, revisions=[])
-#TODO: Remove pictures from pdf files.
-#TODO: Replace "I don't know"s with nothing
 #TODO: Separate FAISS DBs
