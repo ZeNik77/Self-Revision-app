@@ -3,4 +3,5 @@
 /db.sqlite3
 /har_and_cookies/
 /storage/
-/faiss_index/
+/course_faiss/
+/topic_faiss/

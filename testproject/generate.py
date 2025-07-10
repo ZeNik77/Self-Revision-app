@@ -12,10 +12,6 @@ from .settings import MEDIA_ROOT
 from .models import CourseChatHistory, Topic, Courses
 import openai
 import fitz
-import hashlib
-
-def text_hash(text):
-    return hashlib.md5(text.encode("utf-8")).hexdigest()
 # url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
 # headers = {
 #     "Content-Type": "application/json",
@@ -45,22 +41,26 @@ def remove_images(input_pdf):
             xref = img[0]
             page.delete_image(xref)
 
-    # Save to a temporary file
     temp_output = input_pdf + ".temp"
     doc.save(fullPath(temp_output), garbage=4, deflate=True)
-    # Important: release file handle
     doc.close()
-    # Now replace
+
+    import gc
+    gc.collect()
+    import time
+    time.sleep(0.1)
+
     os.replace(fullPath(temp_output), fullPath(input_pdf))
+
     fs = FileSystemStorage()
     fs.delete(temp_output)
-    return input_pdf
 
+    return input_pdf
 def fullPath(path):
     return os.path.join(MEDIA_ROOT, path)
 
 def load_and_chunk_documents(og_file_path, delete=False):
-    try:
+    if og_file_path:
         if og_file_path.endswith('.pdf'):
             remove_images(og_file_path)
             loader = PyPDFLoader(fullPath(og_file_path))
@@ -78,7 +78,7 @@ def load_and_chunk_documents(og_file_path, delete=False):
             separators=["\n\n", "\n", ".", " "]
         )
         return text_splitter.split_documents(pages)
-    except:
+    else:
         print('WARNING: load_chunk_documents() returns None')
         return None
 # --- Vector Store Management ---
@@ -279,6 +279,7 @@ Guidelines:
     # try:
     att = 1
     print('Dividing: Attempt', att)
+
     hist, x = generate_with_rag([{'role': 'user', 'content': content}], path, course_id=course_id, delete=True)
     while 'FOUND NOTHING' in x:
         att += 1
@@ -319,4 +320,3 @@ Write only the formatted summary without any introductions, conclusions, or extr
             while Topic.objects.filter(topic_id=topic_id).exists():
                 topic_id = random.randint(2, 2147483646)
             Topic.objects.create(user_id=user_id, course_id=course_id, topic_id=topic_id, name=name, description=description, revisions=[])
-#TODO: Separate FAISS DBs

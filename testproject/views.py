@@ -8,6 +8,7 @@ from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, T
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
+import os
 
 def index(request):
     # processing POST request
@@ -161,13 +162,17 @@ def course(request, course_id):
     topics = Topic.objects.filter(course_id=course_id)
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics})
 
+def save_file(uploaded_file):
+    fs = FileSystemStorage()
+    # Сохраняем
+    return fs.save(uploaded_file.name, uploaded_file)
+
 def add_outline(request, course_id):
     form = RAGForm(request.POST, request.FILES)
     print(request.FILES)
     if form.is_valid():
         uploaded_file = form.cleaned_data['file']
-        fs = FileSystemStorage()
-        file_path = fs.save(uploaded_file.name, uploaded_file)
+        file_path = save_file(uploaded_file)
         # try:
         divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
         # except Exception as e:
@@ -290,8 +295,7 @@ def sendMessage(request):
             file_path = ''
             if form.cleaned_data['file']:
                 uploaded_file = form.cleaned_data['file']
-                fs = FileSystemStorage()
-                file_path = fs.save(uploaded_file.name, uploaded_file)
+                file_path = save_file(uploaded_file)
             answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
             return JsonResponse({'message': answer})
         else:
