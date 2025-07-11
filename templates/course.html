@@ -20,20 +20,38 @@
         </div>
     </aside>
 
-    <!-- main content -->
+    <!-- главное -->
     <div class="flex-1 p-6 overflow-y-auto">
         <h1 class="text-2xl font-bold mb-4">{{ course.name }}</h1>
         <p class="mb-6 text-gray-600">{{ course.description }}</p>
 
-        <label for="editor" class="block text-sm font-medium text-gray-700 mb-1">Course content:</label>
-        <textarea id="editor" rows="12"
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-200">
-            {{ course.content }}
-        </textarea>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Course content:</label>
+
+    <!-- выбрать заголовок -->
+    <div class="flex items-center gap-2 mb-2">
+            <select id="headingSelect" class="text-sm border rounded p-1">
+                <option value="p">Paragraph</option>
+                <option value="h1">Heading 1</option>
+                <option value="h2">Heading 2</option>
+                <option value="h3">Heading 3</option>
+            </select>
+
+            <input type="color" id="textColorPicker" title="Pick text color" class="w-6 h-6 border rounded" />
+
+            <button onclick="document.execCommand('bold')" class="px-2 py-1 text-sm border rounded hover:bg-gray-100">B</button>
+            <button onclick="document.execCommand('italic')" class="px-2 py-1 text-sm border rounded hover:bg-gray-100">I</button>
+        </div>
+
+        <!-- то что редактируем -->
+        <div id="editor"
+             contenteditable="true"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-200 min-h-[200px] whitespace-pre-wrap overflow-y-auto">
+            {{ course.content|safe }}
+        </div>
     </div>
 </div>
 
-<!-- where we add subtopic -->
+    <!-- добавляем подтему -->
 <div id="subtopicModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-80">
         <h3 class="text-lg font-semibold mb-4">Add Subtopic</h3>
@@ -52,17 +70,17 @@
     </div>
 </div>
 
-<!-- floating AI Button -->
+<!-- AI Button -->
 <button id="openAIPopup"
     class="fixed bottom-6 right-6 z-50 px-4 h-14 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 focus:outline-none flex items-center justify-center text-sm font-medium">
     AI Help
 </button>
 
-<!-- AI Help Popup -->
+<!-- AI Help -->
 <div id="aiPopup" class="fixed bottom-24 right-6 z-50 w-80 max-h-[90vh] overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg p-4 hidden flex-col gap-3 transition-all duration-300">
     <h3 class="text-lg font-semibold mb-2">Ask AI</h3>
 
-    <!-- Normal Mode -->
+    <!-- нормальное окно -->
     <div id="aiMain" class="flex flex-col gap-3">
         <textarea id="aiQuestion" rows="3" placeholder="Ask your question..."
             class="w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 text-sm resize-none"></textarea>
@@ -82,7 +100,7 @@
         </div>
     </div>
 
-    <!-- Test Setup -->
+    <!-- текст -->
     <div id="testSetup" class="hidden flex flex-col gap-3">
         <label class="text-sm font-medium">What to test?</label>
         <select id="testTarget" class="w-full border rounded p-2 text-sm">
@@ -94,11 +112,44 @@
         <button id="startTest" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm">Start Test</button>
     </div>
 
-    <!-- Test Questions -->
+    <!-- вопросы -->
     <div id="testContainer" class="hidden">
-        <!-- Filled dynamically -->
+        <!-- динамически добавляем -->
     </div>
 </div>
+
+<!-- доделать, для бека
+<form method="POST" onsubmit="copyEditorContent()">
+    {% csrf_token %}
+
+    ....
+    {{ form.name }}
+    {{ form.description }}
+
+    ......
+    <input type="hidden" name="content_html" id="content_html">
+
+    <button type="submit" ...>Save</button>
+</form>
+
+function copyEditorContent() {
+    const editorContent = document.getElementById("editor").innerHTML;
+    document.getElementById("content_html").value = editorContent;
+}
+
+
+для views.py
+def update_course(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+
+    if request.method == 'POST':
+        content_html = request.POST.get("content_html", "")
+        course.content = content_html
+        course.save()
+        return redirect('course', course_id=course.id)
+
+    ...
+-->
 
 <script>
     document.getElementById("openSubtopicModal").onclick = () => {
@@ -167,7 +218,7 @@
         renderQuestion();
     }
 
-function nextQuestion() {
+    function nextQuestion() {
         const selected = document.querySelector('input[name="option"]:checked');
         if (selected) {
             answers[currentQuestionIndex] = parseInt(selected.value);
@@ -190,24 +241,45 @@ function nextQuestion() {
             if (isCorrect) correct++;
             testContainer.innerHTML += `
                 <div class="mb-2">
-                    <div class="font-semibold">${i + 1}. ${q.q}</div>
-                    <div class="${isCorrect ? 'text-green-600' : 'text-red-600'} text-sm">
-                        Your answer: ${q.options[answers[i]] || '—'} ${isCorrect ? '✔️' : `✖️ (Correct: ${q.options[q.correct]})`}
-                    </div>
+                <div class="font-semibold">${i + 1}. ${q.q}</div>
+                <div class="${isCorrect ? 'text-green-600' : 'text-red-600'} text-sm">
+                    Your answer: ${q.options[answers[i]] || '—'} ${isCorrect ? '✔️' : `✖️ (Correct: ${q.options[q.correct]})`}
                 </div>
+            </div>
             `;
         });
+
         testContainer.innerHTML += `
             <div class="mt-4 font-semibold">
                 Score: ${correct} / ${questions.length}
             </div>
-            <button onclick="restartAI()" class="mt-4 text-sm text-indigo-600 hover:underline">Back to Assistant</button>
+            <div class="flex gap-4 mt-6 justify-end">
+                <button onclick="restartAI()" class="text-sm text-gray-600 hover:underline">Back to Assistant</button>
+                <button onclick="retakeTest()" class="text-sm text-indigo-600 hover:underline">Retake Test</button>
+            </div>
         `;
+    }
+
+    function retakeTest() {
+        answers = new Array(questions.length).fill(null);
+        currentQuestionIndex = 0;
+        renderQuestion();
     }
 
     function restartAI() {
         testContainer.classList.add("hidden");
         aiMain.classList.remove("hidden");
     }
+
+    // поменять уровень заголовка
+    document.getElementById("headingSelect").onchange = function () {
+        const value = this.value;
+        document.execCommand("formatBlock", false, value);
+    };
+
+    // поменять цвет текста
+    document.getElementById("textColorPicker").oninput = function () {
+        document.execCommand("foreColor", false, this.value);
+    };
 </script>
 {% endblock %}

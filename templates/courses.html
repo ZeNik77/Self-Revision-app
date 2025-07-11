@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="uppercase tracking-wider mb-8 text-gray-600 text-center text-2xl pt-8">
+<h1 class="tracking-wider font-bold mb-8 text-gray-500 text-center text-2xl pt-8">
     Your Courses:
 </h1>
 
@@ -30,22 +30,22 @@
                         <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">{{ c.name }}</h5>
                     </a>
                     <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 flex-grow" id="desc-{{ c.id }}">{{ c.description }}</p>
-                    
+
                     <!-- Кнопки прижимаем вниз с mt-auto -->
                     <div class="flex justify-between items-center mt-auto">
                         <!-- Start Learning -->
-                        <a href="{% url 'course' c.course_id %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-indigo-700 rounded-lg hover:bg-indigo-800 focus:ring-4 focus:outline-none focus:ring-indigo-300 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-indigo-800">
+                        <a href="{% url 'course' c.course_id %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-[#6466E9] rounded-lg hover:bg-[#5456d0] focus:ring-4 focus:outline-none focus:ring-indigo-300 dark:bg-[#6466E9] dark:hover:bg-[#5456d0] dark:focus:ring-indigo-300">
                             Start Learning
                             <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
                             </svg>
                         </a>
-                        
+
                         <!-- Delete Course -->
-                        <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600 dark:focus:ring-red-800">
+                        <button onclick="openDeleteModal({{ c.course_id }})" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300">
                             Delete Course
-                            <svg class="w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h16M7 8v8m4-8v8M7 1h4a1 1 0 0 1 1 1v3H6V2a1 1 0 0 1 1-1ZM3 5h12v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5Z"/>
+                            <svg class="w-4 h-4 ms-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 20" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M1 5h16M7 8v8m4-8v8M7 1h4a1 1 0 011 1v3H6V2a1 1 0 011-1ZM3 5h12v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5Z" />
                             </svg>
                         </button>
                     </div>
@@ -55,11 +55,21 @@
         </div>
     </div>
 
-<script>
-    function confirmDelete() {
-        return confirm("Are you sure you want to delete this course?");
-    }
-</script>
+<!-- Уверен что хочешь удалить -->
+<div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+    <div class="bg-white rounded-lg p-6 w-80 shadow-xl">
+        <h3 class="text-lg font-semibold mb-4">Are you sure you want to delete this course?</h3>
+        <form method="POST" id="deleteForm">
+            {% csrf_token %}
+            <input type="hidden" name="delete_course_id" id="deleteCourseId">
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-sm text-gray-600">Cancel</button>
+                <button type="submit" class="px-4 py-2 text-sm text-white bg-red-600 rounded hover:bg-red-700">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function enableEdit(courseId) {
         document.getElementById(`title-${courseId}`).classList.add('d-none');
@@ -69,6 +79,15 @@
 
     function confirmDelete() {
         return confirm("Are you sure you want to delete this course?");
+    }
+
+    function openDeleteModal(courseId) {
+        document.getElementById("deleteCourseId").value = courseId;
+        document.getElementById("deleteModal").classList.remove("hidden");
+    }
+
+    function closeDeleteModal() {
+        document.getElementById("deleteModal").classList.add("hidden");
     }
 </script>
 {% endblock %}

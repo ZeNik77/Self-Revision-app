@@ -32,4 +32,6 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('courses/topics/<str:topic_name>/', views.render_topics),
     path('profile/', views.profile, name='profile'),
+    path('terms', views.terms, name='terms'),
+    path('privacy', views.privacy, name='privacy'),
 ]

@@ -78,6 +78,11 @@ def logout(request):
     auth.logout(request)
     return redirect(reverse('index'))
 
+def terms(request):
+    return render(request, 'terms_conditions.html')
+
+def privacy(request):
+    return render(request, 'privacy.html')
 
 # Вот кому-то делать нехуй
 # наверное )
