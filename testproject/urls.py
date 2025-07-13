@@ -30,5 +30,8 @@ urlpatterns = [
     path('sendMessage_ajax/', views.sendMessage, name='sendMessage'),
     path('home/', views.home, name='home'),
     path('about/', views.about, name='about'),
-    path('courses/<int:course_id>/<int:topic_id>/', views.topic, name='topic')
+    path('courses/<int:course_id>/<int:topic_id>/', views.topic, name='topic'),
+    path('profile/', views.profile, name='profile'),
+    path('terms', views.terms, name='terms'),
+    path('privacy', views.privacy, name='privacy'),
 ]

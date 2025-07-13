@@ -10,6 +10,9 @@ from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
 import os
 
+def profile(request):
+    return render(request, 'profile.html')
+
 def index(request):
     # processing POST request
     if request.method == 'POST':
@@ -18,9 +21,10 @@ def index(request):
         elif 'register' in request.POST:
             signup(request)
 
-    if not auth.get_user(request).is_active:
-        return redirect(reverse('login'))
-    else:  return redirect(reverse('home'))
+    # redirecting to login page
+    return redirect(reverse('home'))
+    # return redirect(reverse('login'))
+
 def signup(request):
     if request.method == 'POST':
         signup_form = SignUpForm(data = request.POST)
@@ -71,6 +75,32 @@ def login(request):
 def logout(request):
     auth.logout(request)
     return redirect(reverse('index'))
+
+def terms(request):
+    return render(request, 'terms_conditions.html')
+
+def privacy(request):
+    return render(request, 'privacy.html')
+
+# Вот кому-то делать нехуй
+# наверное )
+
+def printAllUsers():
+    for el in User.objects.all():
+        print(el.username)
+
+def testUser():
+    testUser = User.objects.get(username='test')
+    if testUser:
+        print('User \'test\' exists')
+    else: print('nah')
+
+def superUsers():
+    su = User.objects.filter(is_superuser=True)
+    for el in su:
+        print(el.username)
+    else:
+        print('No super users')
 
 def courses (request):
     if not auth.get_user(request).is_active:
