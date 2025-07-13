@@ -103,7 +103,7 @@ def create_or_unify_vector_store(chunks, save_path):
         return vector_store
     else:
         print('create_or_unify_vector_store() went to shit')
-def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, delete=False, save=True):
+def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, delete=False, save=True, strict=True):
     chunks = load_and_chunk_documents(path, delete)
     if topic_id != -1:
         faiss_path = f'topic_faiss/{topic_id}'
@@ -129,8 +129,9 @@ def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, d
     # docs = vector_store.similarity_search(query, k=3)
 
     context = "\n".join([doc.page_content for doc in docs])
+    # print(context)
     # Augment the prompt
-    rag_prompt = {
+    rag_prompt_strict = {
         "role": "system",
         "content": f"""Answer ONLY using the context below. If you don’t find enough information, reply EXACTLY: 'FOUND NOTHING' (without the quotations). Do NOT add any extra knowledge.
 
@@ -140,6 +141,41 @@ def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, d
         
         Current conversation:"""
     }
+    rag_prompt_nonStrict1 = {
+        "role": "system",
+        "content": f"""You are a helpful study assistant. Use the context below as your **main source of truth**. You may rely on your general knowledge to clarify or expand on the content when necessary, but you must clearly base your answer on the provided context whenever possible.
+
+        If the context does not cover the question at all, reply EXACTLY with: 'FOUND NOTHING' (without quotes).
+
+        Context:
+        {context}
+
+        Current conversation:"""
+    }
+    rag_prompt_nonStrict2 = {
+    "role": "system",
+    "content": f"""You are a helpful study assistant.
+    Use the context below as your **main source of truth**. You may rely on your general knowledge to clarify or expand when necessary, but you must base your answer on the provided context whenever possible.
+
+    In your reply:
+    - **Do not** include any reasoning, analysis, or commentary about what you are doing or how you are interpreting the context.
+    - **Do not** describe which parts of the context you used.
+    - **Do not** mention this prompt or the instructions.
+    - If the context does not cover the question at all, reply EXACTLY with: FOUND NOTHING (without quotes).
+
+    Provide **only** the final answer to the user’s question, formatted cleanly and directly.
+
+    Context:
+    {context}
+
+    Current conversation:"""
+    }
+
+    if strict:
+        rag_prompt = rag_prompt_strict
+    else:
+        rag_prompt = rag_prompt_nonStrict2
+
     augmented_history = [rag_prompt] + history
     res = generate(augmented_history)
     if not save:
@@ -259,7 +295,6 @@ def generateTest(topic_name, topic_description):
         test[i] = {'number': i+1, 'question': question, 'answer': answer}
     return (test, correct)
 
-
 def divideToSubtopics(path, course_id, user_id):
     content = '''You are an expert educational content analyst. From the course content provided below, extract a comprehensive flat list of concrete, specific topics, subtopics, and named concepts. 
 
@@ -285,6 +320,7 @@ Guidelines:
         att += 1
         print('Dividing: Attempt', att)
         hist, x = generate_with_rag([{'role': 'user', 'content': content}], '', course_id=course_id, unified=True)
+    x = x.replace('\n', '')
     print('topics found', x)
     topics = json.loads(x)
     # except Exception as e:
@@ -312,7 +348,7 @@ Your summary must:
 Write only the formatted summary without any introductions, conclusions, or extra explanations.
 """
             hist = [{"role": "user", "content": content2}]
-            description = (generate_with_rag(hist, '', course_id=course_id, unified=True))[1]
+            description = (generate_with_rag(hist, '', course_id=course_id, unified=True, strict=False))[1]
             if 'FOUND NOTHING' in description:
                 print(f'Found nothing on topic "{name}"')
                 continue
