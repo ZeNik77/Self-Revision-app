@@ -9,6 +9,7 @@ from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
 import os
+import json
 
 def profile(request):
     return render(request, 'profile.html')
@@ -152,11 +153,10 @@ def add_topic(request, course_id, topic_id=-1):
     form = AddTopicForm(data=request.POST)
     if form.is_valid():
         name = form.cleaned_data['topic_name']
-        description = form.cleaned_data['topic_description']
         topic_id = random.randint(2, 2147483646)
         while Topic.objects.filter(topic_id=topic_id).exists():
             topic_id = random.randint(2, 2147483646)
-        Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
+        Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description='')
         if topic_id == -1:
             return redirect(reverse('course', args=[course_id]))
         else:
@@ -296,11 +296,13 @@ def topic(request, course_id, topic_id):
     if not test.exists():
         test = None
         testForm = None
+        correct = None
     else:
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
+        correct = test.correct
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'correct': json.dumps(correct), 'questions': json.dumps(test.questions), 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:

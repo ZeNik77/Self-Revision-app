@@ -82,12 +82,13 @@ class AddCourseForm(forms.Form):
 class AIForm(forms.Form):
     prompt = forms.CharField(
         label="Your Prompt",
+        required=False,
         widget=forms.Textarea(
             attrs={
                 "id": "aiInput",
-                "class": "form-control",
-                "rows": 4,
-                "placeholder": "Ask the AI anything..."
+                "class": "w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 text-sm resize-none",
+                "rows": 3,
+                "placeholder": "Ask your question..."
             }
         )
     )
@@ -113,29 +114,19 @@ class AIForm(forms.Form):
             'id': 'internetToggle'
         })
     )
-    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'd-none'}))
-    course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idText', 'class': 'd-none'}))
-    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'd-none'}))
-    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'd-none'}))
+    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'hidden'}))
+    course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idText', 'class': 'hidden'}))
+    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'hidden'}))
+    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'hidden'}))
 
 class AddTopicForm(forms.Form):
     topic_name = forms.CharField(
         label="Topic Name",
         max_length=100,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class': 'w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200',
             'placeholder': 'Enter topic name',
             'id': 'topic_name'
-        })
-    )
-
-    topic_description = forms.CharField(
-        label="Topic content",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter topic content',
-            'rows': 5,
-            'id': 'topic_description'
         })
     )
 
@@ -169,8 +160,6 @@ class TestForm2(forms.Form):
             widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
             required=True
         )
-
-
 class RAGForm(forms.Form):
     file = forms.FileField(
         label="Upload Course content",
