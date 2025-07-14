@@ -16,6 +16,13 @@
         <h2 class="text-lg font-semibold">Your Course</h2>
         <button id="openSubtopicModal" class="text-sm text-indigo-600 hover:underline">+ Add</button>
     </div>
+    {% if rag_form %}
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ rag_form.file }}
+      <button type="submit" name="add_topics_file" id="add_topics_file" class="btn btn-sm btn-light">Submit course files</button>
+    </form>
+    {% endif %}
     <div id="subtopicList" class="space-y-2">
         {% for t in topics %}
           <div class="px-3 py-2 rounded hover:bg-gray-100 bg-gray-50">
@@ -40,7 +47,7 @@
         </div>
       {% endif %}
       <h1 class="text-2xl font-bold mb-4">{{ topic.name }}</h1>
-      <p class="mb-6 text-gray-600">{{ topic.description }}</p>
+      <p class="mb-6 text-gray-600">{{ topic.description|safe }}</p>
 
       <!-- <label for="editor" class="block text-sm font-medium text-gray-700 mb-1">Course content:</label>
       <textarea id="editor" rows="12" class="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-200"></textarea> -->

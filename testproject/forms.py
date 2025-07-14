@@ -169,6 +169,20 @@ class TestForm2(forms.Form):
             widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
             required=True
         )
+
+
+class RAGForm(forms.Form):
+    file = forms.FileField(
+        label="Upload Course content",
+        # max_size=5*1024*1024,
+        # allowed_extensions=['pdf', 'docx', 'txt'],
+        widget=forms.ClearableFileInput(
+            attrs={
+                "id": "fileInput",
+                "class": "form-control",
+            }
+        )
+    )
 class AddTestForm(forms.Form):
     course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idAddTest', 'class': 'd-none'}))
     topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))

@@ -3,11 +3,12 @@ from django.shortcuts import render
 from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2
+from django.core.files.storage import FileSystemStorage
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
-from .generate_tests import generateTest
-from .generate import generate
+from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
+import os
 
 def index(request):
     # processing POST request
@@ -152,13 +153,33 @@ def course(request, course_id):
                 return x
         if 'delete_topic' in request.POST:
             return delete_topic(request, course_id)
+        if 'add_topics_file' in request.POST:
+            add_outline(request, course_id)
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
     topics = Topic.objects.filter(course_id=course_id)
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics})
 
+def save_file(uploaded_file):
+    fs = FileSystemStorage()
+    # Сохраняем
+    return fs.save(uploaded_file.name, uploaded_file)
+
+def add_outline(request, course_id):
+    form = RAGForm(request.POST, request.FILES)
+    print(request.FILES)
+    if form.is_valid():
+        uploaded_file = form.cleaned_data['file']
+        file_path = save_file(uploaded_file)
+        # try:
+        divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
+        # except Exception as e:
+        #     print('=====\n', e, '\n=====')
+        return redirect(reverse('course', args=(course_id,)))
+    else:
+        print(form.errors)
 
 def topic(request, course_id, topic_id):
     testError = ''
@@ -237,6 +258,8 @@ def topic(request, course_id, topic_id):
             test_id = request.POST['delete_test']
             if (test := Test.objects.filter(test_id=test_id)).exists():
                 test.delete()
+        if 'add_topics_file' in request.POST:
+            add_outline(request, course_id)
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
@@ -247,7 +270,7 @@ def topic(request, course_id, topic_id):
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:
@@ -258,60 +281,6 @@ def home(request):
 def about(request):
     return render(request, 'about.html')
 
-def revise(course, topic_name, topic_description):
-    url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
-    # content = f"Generate a clear, structured summary in English on the topic \"{topic_name}\" from the course \"{course}\" with the following description: {topic_description}. The summary must include key ideas, important details, and subtle or often overlooked points. Format the output as an HTML unordered list (<ul><li>...</li></ul>) without any additional text or explanations."
-# - Always be formatted as an HTML unordered list: <ul><li>...</li></ul>.
-    
-    
-    
-    content = f"""You are a study assistant. Generate a clear, structured summary in English on the topic "{topic_name}" from the course "{course}", using the following description as your reference:
-
-{topic_description}
-
-Your summary must:
-- Always be formatted as a list of points, each starting with “-” and ending with “<br>”.
-- Include both obvious and subtle or often overlooked points.
-- Highlight important terms using <b>bold</b> or <i>italic</i> HTML tags.
-- If your answer contains any mathematical expressions—whether they are full equations or single symbols like "\\nabla f"—**wrap them exactly** in the following block format:
-  <div class="latex">YOUR_LATEX_HERE</div>
-- Place LaTeX blocks on their **own line** right after the sentence they relate to. Do not inline LaTeX with normal text.
-- Do not use any other tags, styles, or wrappers for LaTeX.
-Do not include any greetings, introductions, or explanations—return only the summary.
-"""
-
-
-    answer = generate([{'role': 'user', 'content': content}])
-    return answer
-
-def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText):
-    content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
-
-{topic_description}
-
-Your response must follow these rules:
-- Begin the response **exactly** with: "Answer: " (without quotes).
-- Use <b>bold</b> and <i>italic</i> HTML tags to emphasize key terms.
-- If your answer contains any mathematical expressions—whether they are full equations or single symbols like "\\nabla f"—**wrap them exactly** in the following block format:
-  <div class="latex">YOUR_LATEX_HERE</div>
-- Place LaTeX blocks on their **own line** right after the sentence they relate to. Do not inline LaTeX with normal text.
-- Do not use any other tags, styles, or wrappers for LaTeX.
-- If the question is unrelated to the topic, respond with only: "The question is not related to the specified topic."
-
-Do not include any greetings, introductions, or explanations—return only the direct answer.
-
-Here is the question: {input}
-"""
-    if fileText:
-        content = f"When generating the answer, you must consider this file content as part of the topic context: {fileText}\n\n{content}"
-    try:
-        history = CourseChatHistory.objects.get(course_id=course_id)
-    except:
-        history = CourseChatHistory.objects.create(course_id=course_id, history=[])
-    history.history.append({"role": "user", 'message': input, "content": content})
-    history.save() 
-    answer = generate(history.history)
-    return answer
 
 def sendMessage(request):
     if request.method == 'POST':
@@ -323,20 +292,13 @@ def sendMessage(request):
             topic_name = form.cleaned_data['topic_name']
             topic_description = form.cleaned_data['topic_description']
             internet_toggle = form.cleaned_data['internet_toggle']
+            file_path = ''
             if form.cleaned_data['file']:
-                fileText = ''
                 uploaded_file = form.cleaned_data['file']
-                for chunk in uploaded_file.chunks():
-                    fileText += chunk.decode('utf-8')
-            else:
-                fileText = ''
-            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, fileText)
+                file_path = save_file(uploaded_file)
+            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
             return JsonResponse({'message': answer})
         else:
             return JsonResponse({'message': form.errors})
     return JsonResponse({'message': 'Invalid request'})
-
-
-api_key = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
-
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.

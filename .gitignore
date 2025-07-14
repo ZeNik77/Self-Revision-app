@@ -1,4 +1,7 @@
-/testproject/migrations
-/testproject/__pycache__
+/testproject/migrations/
+/testproject/__pycache__/
 /db.sqlite3
-/har_and_cookies
+/har_and_cookies/
+/storage/
+/course_faiss/
+/topic_faiss/

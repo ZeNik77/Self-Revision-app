@@ -10,13 +10,13 @@ class User(AbstractUser):
 
 class Courses(models.Model):
     course_id = models.IntegerField()
-    name = models.CharField(max_length=20)
+    name = models.CharField(max_length=100)
     description = models.TextField()
     user_id = models.IntegerField()
 
 class Topic(models.Model):
     topic_id = models.IntegerField()
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=100)
     description = models.TextField()
     course_id = models.IntegerField()
     user_id = models.IntegerField()
