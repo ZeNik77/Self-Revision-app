@@ -297,12 +297,14 @@ def topic(request, course_id, topic_id):
         test = None
         testForm = None
         correct = None
+        questions = None
     else:
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
         correct = test.correct
+        questions = test.questions
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'correct': json.dumps(correct), 'questions': json.dumps(test.questions), 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'correct': json.dumps(correct), 'questions': json.dumps(questions), 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
     
 def home(request):
     if auth.get_user(request).is_active:
