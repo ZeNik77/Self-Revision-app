@@ -130,23 +130,6 @@ class AddTopicForm(forms.Form):
         })
     )
 
-def TestForm(questions):
-    """
-    Dynamically create a form with one ChoiceField per question.
-    """
-    # Build a dict of fields
-    fields = {}
-    for i, q in enumerate(questions, start=1):
-        field_name = f"question_{i}"
-        fields[field_name] = forms.ChoiceField(
-            label=q["question"],
-            choices=[(a, a) for a in q["answer"]],
-            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
-            required=True
-        )
-    # Create the form class dynamically
-    return type("DynamicQuizForm", (forms.Form,), fields)
-
 class TestForm2(forms.Form):
   def __init__(self, *args, **kwargs):
     questions = kwargs.pop('questions')
@@ -157,7 +140,7 @@ class TestForm2(forms.Form):
         self.fields[field_name] = forms.ChoiceField(
             label=q["question"],
             choices=[(a, a) for a in q["answer"]],
-            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+            widget=forms.RadioSelect(attrs={"class": "mr-2", "id": field_name}),
             required=True
         )
 class RAGForm(forms.Form):
