@@ -13,20 +13,19 @@ import json
 
 def profile(request):
     user = request.user
+    results = []
 
     if request.method == "POST":
         # Загрузка аватарки
         avatar = request.FILES.get("avatar")
         if avatar:
             user.avatar = avatar
-
-        # Выбор курса и подтемы
-        course_id = request.POST.get("course")
-        subtopic_id = request.POST.get("subtopic")
-        if course_id:
-            request.session["selected_course"] = course_id
-        if subtopic_id:
-            request.session["selected_subtopic"] = subtopic_id
+        if 'submit_seeResults' in request.POST:
+            subtopic_id = request.POST.get("subtopic")
+            try:
+                results = Test.objects.filter(topic_id=subtopic_id, passed=True)
+            except:
+                return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
 
         user.save()
         return redirect("profile")
@@ -34,7 +33,8 @@ def profile(request):
     courses = Courses.objects.all()
     return render(request, "profile.html", {
         "user": user,
-        "courses": courses
+        "courses": courses,
+        "results": results
     })
 # понятия не имею правильно ли я подключила, но работает криво? можно убрать и оставить дефолтную аватарку
 
@@ -355,8 +355,21 @@ def sendMessage(request):
                 uploaded_file = form.cleaned_data['file']
                 file_path = save_file(uploaded_file)
             answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
-            return JsonResponse({'message': answer})
+            return JsonResponse({'message': answer}, status=200)
         else:
-            return JsonResponse({'message': form.errors})
-    return JsonResponse({'message': 'Invalid request'})
+            return JsonResponse({'error': form.errors}, status=500)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
+
+def seeTopics(request):
+    if request.method == 'POST':
+        if 'id' in request.POST:
+            courseId = int(request.POST['id'])
+            try:
+                topics = Topic.objects.filter(course_id=courseId).all()
+                topics = [{'name': el.name, 'topic_id': el.topic_id} for el in topics]
+                return JsonResponse({'topics': topics}, status=200)
+            except:
+                return JsonResponse({'error': 'Unknown error'}, status=500)
+        else:
+            return JsonResponse({'error': 'No ID in the request'}, status=400)

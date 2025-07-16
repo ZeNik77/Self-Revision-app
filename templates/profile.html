@@ -21,15 +21,16 @@
             <img src="{{ user.avatar.url }}" alt="avatar" class="mt-2 h-20 w-20 rounded-full object-cover">
         {% endif %}
     </div>
-
+  </form>
+  <form method="POST" class="space-y-4">
+    {% csrf_token %}
     <!-- выбор курса -->
     <div>
       <label for="course" class="block text-sm font-medium text-gray-700">Select Course</label>
-      <select name="course" id="course" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              onchange="loadSubtopics(this.value)">
+      <select name="course" id="course" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
         <option value=""> Choose course </option>
         {% for course in courses %}
-          <option value="{{ course.id }}">{{ course.name }}</option>
+          <option value="{{ course.course_id }}">{{ course.name }}</option>
         {% endfor %}
       </select>
     </div>
@@ -37,31 +38,46 @@
     <!-- выбор подтемы -->
     <div>
       <label for="subtopic" class="block text-sm font-medium text-gray-700">Select Subtopic</label>
-      <select name="subtopic" id="subtopic" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+      <select name="subtopic" id="subtopic" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
         <option value="">-- Choose subtopic --</option>
       </select>
     </div>
 
-    <button type="submit" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+    <button type="submit" name="submit_seeResults" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
       Show Test
     </button>
   </form>
 </div>
 
 <script>
-  function loadSubtopics(courseId) {
-    fetch(`/get_subtopics/?course_id=${courseId}`)
-      .then(response => response.json())
-      .then(data => {
-        const subtopicSelect = document.getElementById('subtopic');
-        subtopicSelect.innerHTML = '<option value="">-- Choose subtopic --</option>';
-        data.subtopics.forEach(sub => {
-          const option = document.createElement('option');
-          option.value = sub.id;
-          option.textContent = sub.name;
-          subtopicSelect.appendChild(option);
-        });
-      });
-  }
+$(document).ready(function() {
+  $('#course').change(function() {
+      const courseId = $(this).val();
+      if (courseId) {
+          $.ajax({
+              headers: {
+                  "X-CSRFToken": "{{ csrf_token }}"
+              },
+              url: '{% url "seeTopics" %}',
+              method: 'POST',
+              data: {
+                  id: courseId
+              },
+              success: function(data) {
+                  $('#subtopic').html("<option value=\"\">-- Choose subtopic --</option>");  // Очистка перед добавлением
+                  $.each(data.topics, function(index, el) {
+                      $('#subtopic').append(
+                          $('<option>').val(el.topic_id).text(el.name)
+                      );
+                  });
+              },
+              error: function(xhr) {
+                  alert('Ошибка: ' + xhr.responseJSON?.error);
+              }
+          });
+      }
+  });
+});
 </script>
+
 {% endblock %}

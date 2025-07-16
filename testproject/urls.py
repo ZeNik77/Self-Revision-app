@@ -34,4 +34,5 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('terms', views.terms, name='terms'),
     path('privacy', views.privacy, name='privacy'),
+    path('seeTopics_ajax/', views.seeTopics, name='seeTopics')
 ]

@@ -40,7 +40,7 @@
                 </a>
                 <form method="POST" onsubmit="return confirmDeleteTopic('{{ t.name }}');">
                     {% csrf_token %}
-                    <button type="submit" name="delete_subtopic" value="{{ t.topic_id }}"
+                    <button type="submit" name="delete_topic" value="{{ t.topic_id }}"
                         class="text-gray-500 hover:text-red-600 ml-2" title="Delete subtopic">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -61,8 +61,9 @@
     <h1 class="text-2xl font-bold mb-4">{{ course.name }}</h1>
     <p class="mb-6 text-gray-600">{{ course.description }}</p>
 
-    <!-- <label class="block text-sm font-medium text-gray-700 mb-1">Course content:</label> -->
     <!-- выбрать заголовок -->
+
+{% if topic %}
     <div class="flex items-center gap-2 mb-2">
             <select id="headingSelect" class="text-sm border rounded p-1">
                 <option value="p">Paragraph</option>
@@ -76,8 +77,6 @@
             <button onclick="document.execCommand('bold')" class="px-2 py-1 text-sm border rounded hover:bg-gray-100">B</button>
             <button onclick="document.execCommand('italic')" class="px-2 py-1 text-sm border rounded hover:bg-gray-100">I</button>
     </div>
-
-{% if topic %}
 <!-- то что редактируем -->
 <div id="editor"
       contenteditable="true"
@@ -268,6 +267,8 @@
     </div>
   </div>
   {% endfor %}
+{% else %}
+<label class="block text-sm font-medium text-gray-700 mb-1">Choose topic</label>
 {% endif %}
 
 <div id="subtopicModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
@@ -289,7 +290,6 @@
         </form>
     </div>
 </div>
-
 <script>
   function confirmDeleteTopic(name) {
       return confirm("Are you sure you want to delete the topic " + name + "?");
