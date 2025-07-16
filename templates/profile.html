@@ -39,7 +39,7 @@
     <div>
       <label for="subtopic" class="block text-sm font-medium text-gray-700">Select Subtopic</label>
       <select name="subtopic" id="subtopic" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required>
-        <option value="">-- Choose subtopic --</option>
+        <option value=""> Choose subtopic </option>
       </select>
     </div>
 
@@ -48,6 +48,41 @@
     </button>
   </form>
 </div>
+
+{% if results %}
+  {% for t in results %}
+  <div class="bg-white border rounded shadow p-4 mb-4 max-w-2xl mx-auto max-h-[500px] overflow-auto">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-md font-bold text-green-700">Test Completed</h3>
+      <span class="text-sm text-gray-500">Grade: {{ t.grade }}%</span>
+    </div>
+    <p class="mb-2">
+      <strong>Correct Answers:</strong> {{ t.correctQuestions|length }} / {{ t.correct|length }}
+    </p>
+    <div class="mb-2 space-y-4">
+      {# <strong>Incorrect Answers:</strong> #}
+      {% for q in t.questions %}
+        <div class="border border-gray-200 rounded p-3 shadow-sm bg-gray-50">
+          <p class="font-medium text-sm mb-2">{{ forloop.counter }}. {{ q.question }}</p>
+          <ul class="space-y-1 text-sm">
+            {% for opt in q.options %}
+              <li class="{% if opt == q.user_answer and opt != q.correct %}text-red-600{% elif opt == q.correct %}text-green-600{% endif %}">
+                  {{ opt }}
+                  {% if opt == q.user_answer and opt != q.correct %} — Your answer{% endif %}
+                  {% if opt == q.correct %} — Correct{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="flex justify-center mt-6">
+    <p class="text-gray-600 text-sm">No test results to display.</p>
+  </div>
+{% endif %}
 
 <script>
 $(document).ready(function() {
@@ -64,7 +99,7 @@ $(document).ready(function() {
                   id: courseId
               },
               success: function(data) {
-                  $('#subtopic').html("<option value=\"\">-- Choose subtopic --</option>");  // Очистка перед добавлением
+                  $('#subtopic').html("<option value=\"\"> Choose subtopic </option>");  // Очистка перед добавлением
                   $.each(data.topics, function(index, el) {
                       $('#subtopic').append(
                           $('<option>').val(el.topic_id).text(el.name)

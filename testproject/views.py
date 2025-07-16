@@ -24,11 +24,68 @@ def profile(request):
             subtopic_id = request.POST.get("subtopic")
             try:
                 results = Test.objects.filter(topic_id=subtopic_id, passed=True)
+                # у нас как отображаются правильные и неправильные ответы в тесте?
+                # python shell выводит вот такое
+                # {
+                #     "answer": [
+                #         ".format() method",
+                #         "String concatenation",
+                #         "f-strings"
+                #     ],
+                #     "number": 1,
+                #     "question": "What is the primary method for formatting the greeting in the \"Hello, Harry!\" task?"
+                # },
+                # {
+                #     "answer": [
+                #         "+",
+                #         "&",
+                #         "*"
+                #     ],
+                # то есть у нас список вариантов ответа, но нет поля с правильным или выбранным ответом?
+                # наверное костыль но я не знаю как ещё вытащить правильные неправильные варианты
+                for test in results:
+                    qlist = []
+                    correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
+                    incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
+                    for q in test.questions:
+                        opts = q.get("answer", [])
+                        text = q.get("question", "")
+                        if text in correct_map:
+                            user_ans = correct_map[text]
+                            qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
+                        elif text in incorrect_map:
+                            user_ans, correct_ans = incorrect_map[text]
+                            qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
+                        else:
+                            qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
+                    test.questions = qlist
             except:
                 return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
 
         user.save()
-        return redirect("profile")
+        request.session["selected_subtopic"] = subtopic_id
+
+    elif request.method == "GET":
+        subtopic_id = request.session.get("selected_subtopic")
+        if subtopic_id:
+            results = Test.objects.filter(topic_id=subtopic_id, user_id=user.id, passed=True)
+            #
+            for test in results:
+                qlist = []
+                correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
+                incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
+                for q in test.questions:
+                    opts = q.get("answer", [])
+                    text = q.get("question", "")
+                    if text in correct_map:
+                        user_ans = correct_map[text]
+                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
+                    elif text in incorrect_map:
+                        user_ans, correct_ans = incorrect_map[text]
+                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
+                    else:
+                        qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
+                test.questions = qlist
 
     courses = Courses.objects.all()
     return render(request, "profile.html", {
