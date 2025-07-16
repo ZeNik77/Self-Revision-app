@@ -17,18 +17,39 @@
 
         <div id="subtopicList" class="space-y-2">
           {% if rag_form %}
-          <form method="POST" enctype="multipart/form-data">
+          <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-2">
             {% csrf_token %}
-            {{ rag_form.file }}
-            <button type="submit" name="add_topics_file" id="add_topics_file" class="btn btn-sm btn-light">Submit course files</button>
+              <input type="file" name="file" id="id_file" class="hidden" accept=".pdf" onchange="updateFileName(this)">
+            <label for="id_file" id="customFileLabel" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 cursor-pointer inline-block w-max">
+              Upload File
+            </label>
+            <button type="submit" name="add_topics_file" id="add_topics_file" class="px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300 w-max">Submit</button>
+            <p class="text-xs text-grey-500">Only PDF files are allowed.</p>
           </form>
+          <script>
+            function updateFileName(input) {
+              const fileNameSpan = document.getElementById("fileName");
+              fileNameSpan.textContent = input.files.length > 0 ? input.files[0].name : "No file selected";
+            }
+          </script>
           {% endif %}
           {% for t in topics %}
-              <div class="px-3 py-2 rounded hover:bg-gray-100 bg-gray-50">
-                  <a href="{% url 'topic' course.course_id t.topic_id %}">
-                  {{ t.name }}
-                  </a>
-              </div>
+            <div class="px-3 py-2 rounded hover:bg-gray-100 bg-gray-50 flex items-center justify-between">
+                <a href="{% url 'topic' course.course_id t.topic_id %}">
+                    {{ t.name }}
+                </a>
+                <form method="POST" onsubmit="return confirmDeleteTopic('{{ t.name }}');">
+                    {% csrf_token %}
+                    <button type="submit" name="delete_subtopic" value="{{ t.topic_id }}"
+                        class="text-gray-500 hover:text-red-600 ml-2" title="Delete subtopic">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
           {% empty %}
               <p class="text-gray-400 text-sm">No subtopics yet</p>
           {% endfor %}
@@ -206,39 +227,6 @@
   </div>
 </div>
 {% endif %}
-
-<!-- доделать, для бека
-<form method="POST" onsubmit="copyEditorContent()">
-    {% csrf_token %}
-
-    ....
-    {{ form.name }}
-    {{ form.description }}
-
-    ......
-    <input type="hidden" name="content_html" id="content_html">
-
-    <button type="submit" ...>Save</button>
-</form>
-
-function copyEditorContent() {
-    const editorContent = document.getElementById("editor").innerHTML;
-    document.getElementById("content_html").value = editorContent;
-}
-
-
-для views.py
-def update_course(request, course_id):
-    course = get_object_or_404(Course, pk=course_id)
-
-    if request.method == 'POST':
-        content_html = request.POST.get("content_html", "")
-        course.content = content_html
-        course.save()
-        return redirect('course', course_id=course.id)
-
-    ...
--->
   </div>
 
   {% for t in passed_tests %}

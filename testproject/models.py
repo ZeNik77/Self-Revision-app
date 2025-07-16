@@ -7,6 +7,7 @@ class User(AbstractUser):
     # password = models.CharField()
     # bio = models.TextField()
     user_id = models.IntegerField(default=0)
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
 class Courses(models.Model):
     course_id = models.IntegerField()

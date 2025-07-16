@@ -12,7 +12,31 @@ import os
 import json
 
 def profile(request):
-    return render(request, 'profile.html')
+    user = request.user
+
+    if request.method == "POST":
+        # Загрузка аватарки
+        avatar = request.FILES.get("avatar")
+        if avatar:
+            user.avatar = avatar
+
+        # Выбор курса и подтемы
+        course_id = request.POST.get("course")
+        subtopic_id = request.POST.get("subtopic")
+        if course_id:
+            request.session["selected_course"] = course_id
+        if subtopic_id:
+            request.session["selected_subtopic"] = subtopic_id
+
+        user.save()
+        return redirect("profile")
+
+    courses = Courses.objects.all()
+    return render(request, "profile.html", {
+        "user": user,
+        "courses": courses
+    })
+# понятия не имею правильно ли я подключила, но работает криво? можно убрать и оставить дефолтную аватарку
 
 def index(request):
     # processing POST request
