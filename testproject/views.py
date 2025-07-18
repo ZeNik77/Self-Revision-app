@@ -4,7 +4,7 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
@@ -371,6 +371,14 @@ def topic(request, course_id, topic_id):
                 test.delete()
         if 'add_topics_file' in request.POST:
             add_outline(request, course_id)
+        if 'save_topic' in request.POST:
+            form = SaveTopicForm(request.POST)
+            if form.is_valid():
+                description = form.cleaned_data['description']
+                topic.description = description
+                topic.save()
+            else:
+                print(form.errors)
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
@@ -385,7 +393,22 @@ def topic(request, course_id, topic_id):
         correct = test.correct
         questions = test.questions
     revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'correct': json.dumps(correct), 'questions': json.dumps(questions), 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+    return render(request, 'course.html', {
+        'form': AIForm, 
+        'addTopicForm': AddTopicForm, 
+        'rag_form': RAGForm, 
+        'saveTopicForm': SaveTopicForm,
+        'course': course, 
+        'topics': topics, 
+        'topic': topic, 
+        'test': test, 
+        'test_form': testForm, 
+        'correct': json.dumps(correct), 
+        'questions': json.dumps(questions), 
+        'revisions': revisions, 
+        'passed_tests': passed_tests, 
+        'test_error': testError,
+    })
     
 def home(request):
     if auth.get_user(request).is_active:
