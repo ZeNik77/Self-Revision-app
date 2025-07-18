@@ -252,7 +252,7 @@ def delete_topic(request, course_id, topicId=-1):
         el.delete()
     if topic:
         topic[0].delete()
-    if topic_id == -1:
+    if topicId == -1:
         return redirect(reverse('course', args=[course_id]))
     else:
         return redirect(reverse('topic', args=[course_id, topicId]))
