@@ -82,12 +82,13 @@ class AddCourseForm(forms.Form):
 class AIForm(forms.Form):
     prompt = forms.CharField(
         label="Your Prompt",
+        required=False,
         widget=forms.Textarea(
             attrs={
                 "id": "aiInput",
-                "class": "form-control",
-                "rows": 4,
-                "placeholder": "Ask the AI anything..."
+                "class": "w-full p-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 text-sm resize-none",
+                "rows": 3,
+                "placeholder": "Ask your question..."
             }
         )
     )
@@ -113,48 +114,21 @@ class AIForm(forms.Form):
             'id': 'internetToggle'
         })
     )
-    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'd-none'}))
-    course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idText', 'class': 'd-none'}))
-    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'd-none'}))
-    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'd-none'}))
+    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'hidden'}))
+    course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idText', 'class': 'hidden'}))
+    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'hidden'}))
+    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'hidden'}))
 
 class AddTopicForm(forms.Form):
     topic_name = forms.CharField(
         label="Topic Name",
         max_length=100,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class': 'w-full mb-4 px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-200',
             'placeholder': 'Enter topic name',
             'id': 'topic_name'
         })
     )
-
-    topic_description = forms.CharField(
-        label="Topic content",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'placeholder': 'Enter topic content',
-            'rows': 5,
-            'id': 'topic_description'
-        })
-    )
-
-def TestForm(questions):
-    """
-    Dynamically create a form with one ChoiceField per question.
-    """
-    # Build a dict of fields
-    fields = {}
-    for i, q in enumerate(questions, start=1):
-        field_name = f"question_{i}"
-        fields[field_name] = forms.ChoiceField(
-            label=q["question"],
-            choices=[(a, a) for a in q["answer"]],
-            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
-            required=True
-        )
-    # Create the form class dynamically
-    return type("DynamicQuizForm", (forms.Form,), fields)
 
 class TestForm2(forms.Form):
   def __init__(self, *args, **kwargs):
@@ -166,11 +140,9 @@ class TestForm2(forms.Form):
         self.fields[field_name] = forms.ChoiceField(
             label=q["question"],
             choices=[(a, a) for a in q["answer"]],
-            widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
+            widget=forms.RadioSelect(attrs={"class": "mr-2", "id": field_name}),
             required=True
         )
-
-
 class RAGForm(forms.Form):
     file = forms.FileField(
         label="Upload Course content",
@@ -179,10 +151,16 @@ class RAGForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "id": "fileInput",
-                "class": "form-control",
+                'type': 'file',
+                # "class": "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400",
             }
         )
     )
+class SaveTopicForm(forms.Form):
+    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicDescription', 'tabindex': "0", 'class': "hidden"}))
+
+class SaveRevisionForm(forms.Form):
+    revision = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicRevision', 'tabIndex': '0', 'class': 'hidden'}))
 class AddTestForm(forms.Form):
     course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idAddTest', 'class': 'd-none'}))
     topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))

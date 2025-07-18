@@ -4,11 +4,96 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
 import os
+import json
+
+def profile(request):
+    user = request.user
+    results = []
+
+    if request.method == "POST":
+        # Загрузка аватарки
+        avatar = request.FILES.get("avatar")
+        if avatar:
+            user.avatar = avatar
+        if 'submit_seeResults' in request.POST:
+            subtopic_id = request.POST.get("subtopic")
+            try:
+                results = Test.objects.filter(topic_id=subtopic_id, passed=True)
+                # у нас как отображаются правильные и неправильные ответы в тесте?
+                # python shell выводит вот такое
+                # {
+                #     "answer": [
+                #         ".format() method",
+                #         "String concatenation",
+                #         "f-strings"
+                #     ],
+                #     "number": 1,
+                #     "question": "What is the primary method for formatting the greeting in the \"Hello, Harry!\" task?"
+                # },
+                # {
+                #     "answer": [
+                #         "+",
+                #         "&",
+                #         "*"
+                #     ],
+                # то есть у нас список вариантов ответа, но нет поля с правильным или выбранным ответом?
+                # наверное костыль но я не знаю как ещё вытащить правильные неправильные варианты
+                for test in results:
+                    qlist = []
+                    correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
+                    incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
+                    for q in test.questions:
+                        opts = q.get("answer", [])
+                        text = q.get("question", "")
+                        if text in correct_map:
+                            user_ans = correct_map[text]
+                            qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
+                        elif text in incorrect_map:
+                            user_ans, correct_ans = incorrect_map[text]
+                            qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
+                        else:
+                            qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
+                    test.questions = qlist
+            except:
+                return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
+
+        user.save()
+        request.session["selected_subtopic"] = subtopic_id
+
+    elif request.method == "GET":
+        subtopic_id = request.session.get("selected_subtopic")
+        if subtopic_id:
+            results = Test.objects.filter(topic_id=subtopic_id, user_id=user.id, passed=True)
+            #
+            for test in results:
+                qlist = []
+                correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
+                incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
+                for q in test.questions:
+                    opts = q.get("answer", [])
+                    text = q.get("question", "")
+                    if text in correct_map:
+                        user_ans = correct_map[text]
+                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
+                    elif text in incorrect_map:
+                        user_ans, correct_ans = incorrect_map[text]
+                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
+                    else:
+                        qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
+                test.questions = qlist
+
+    courses = Courses.objects.all()
+    return render(request, "profile.html", {
+        "user": user,
+        "courses": courses,
+        "results": results
+    })
+# понятия не имею правильно ли я подключила, но работает криво? можно убрать и оставить дефолтную аватарку
 
 def index(request):
     # processing POST request
@@ -18,9 +103,10 @@ def index(request):
         elif 'register' in request.POST:
             signup(request)
 
-    if not auth.get_user(request).is_active:
-        return redirect(reverse('login'))
-    else:  return redirect(reverse('home'))
+    # redirecting to login page
+    return redirect(reverse('home'))
+    # return redirect(reverse('login'))
+
 def signup(request):
     if request.method == 'POST':
         signup_form = SignUpForm(data = request.POST)
@@ -72,6 +158,32 @@ def logout(request):
     auth.logout(request)
     return redirect(reverse('index'))
 
+def terms(request):
+    return render(request, 'terms_conditions.html')
+
+def privacy(request):
+    return render(request, 'privacy.html')
+
+# Вот кому-то делать нехуй
+# наверное )
+
+def printAllUsers():
+    for el in User.objects.all():
+        print(el.username)
+
+def testUser():
+    testUser = User.objects.get(username='test')
+    if testUser:
+        print('User \'test\' exists')
+    else: print('nah')
+
+def superUsers():
+    su = User.objects.filter(is_superuser=True)
+    for el in su:
+        print(el.username)
+    else:
+        print('No super users')
+
 def courses (request):
     if not auth.get_user(request).is_active:
         return redirect(reverse('index'))
@@ -122,11 +234,10 @@ def add_topic(request, course_id, topic_id=-1):
     form = AddTopicForm(data=request.POST)
     if form.is_valid():
         name = form.cleaned_data['topic_name']
-        description = form.cleaned_data['topic_description']
         topic_id = random.randint(2, 2147483646)
         while Topic.objects.filter(topic_id=topic_id).exists():
             topic_id = random.randint(2, 2147483646)
-        Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description=description)
+        Topic.objects.create(topic_id=topic_id, course_id=course_id, user_id=auth.get_user(request).user_id, name=name, description='')
         if topic_id == -1:
             return redirect(reverse('course', args=[course_id]))
         else:
@@ -214,8 +325,7 @@ def topic(request, course_id, topic_id):
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
-            revision = revise(course.name, topic.name, topic.description)
-            topic.revisions.append(revision)
+            topic.revision = revise(course.name, topic.name, topic.description)
             topic.save()
         if 'submit_test' in request.POST:
             test = Test.objects.filter(topic_id=topic_id)
@@ -250,27 +360,64 @@ def topic(request, course_id, topic_id):
             t_id = request.POST['delete_topic']
             delete_topic(t_id)
             return redirect(reverse('topic', args=(course_id, topic_id)))
-        if 'delete_revision' in request.POST:
-            rev_i = int(request.POST['delete_revision'])
-            topic.revisions.pop(rev_i)
-            topic.save()
         if 'delete_test' in request.POST:
             test_id = request.POST['delete_test']
             if (test := Test.objects.filter(test_id=test_id)).exists():
                 test.delete()
         if 'add_topics_file' in request.POST:
             add_outline(request, course_id)
+        if 'save_topic' in request.POST:
+            form = SaveTopicForm(request.POST)
+            if form.is_valid():
+                description = form.cleaned_data['description']
+                topic.description = description
+                topic.save()
+            else:
+                print(form.errors)
+        if 'save_revision' in request.POST:
+            form = SaveRevisionForm(request.POST)
+            if form.is_valid():
+                revision = form.cleaned_data['revision']
+                topic.revision = revision
+                topic.save()
+            else:
+                print(form.errors)
     topics = Topic.objects.filter(course_id=course_id)
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
     if not test.exists():
         test = None
         testForm = None
+        correct = None
+        questions = None
     else:
         test = test.last()
         testForm = TestForm2(questions=test.questions, correct=test.correct)
-    revisions = topic.revisions
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics, 'topic': topic, 'test': test, 'test_form': testForm, 'revisions': revisions, 'passed_tests': passed_tests, 'test_error': testError})
+        correct = test.correct
+        questions = test.questions
+    revision = topic.revision
+    print(revision, '\n', f'"{revision.strip()}"')
+    if revision.replace('<br>', '').strip() == '':
+        revision = ''
+        topic.revision = ''
+        topic.save()
+    return render(request, 'course.html', {
+        'form': AIForm, 
+        'addTopicForm': AddTopicForm, 
+        'rag_form': RAGForm, 
+        'saveTopicForm': SaveTopicForm,
+        'saveRevisionForm': SaveRevisionForm,
+        'course': course, 
+        'topics': topics, 
+        'topic': topic, 
+        'test': test, 
+        'test_form': testForm, 
+        'correct': json.dumps(correct), 
+        'questions': json.dumps(questions), 
+        'revision': revision, 
+        'passed_tests': passed_tests, 
+        'test_error': testError,
+    })
     
 def home(request):
     if auth.get_user(request).is_active:
@@ -297,8 +444,22 @@ def sendMessage(request):
                 uploaded_file = form.cleaned_data['file']
                 file_path = save_file(uploaded_file)
             answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
-            return JsonResponse({'message': answer})
+            return JsonResponse({'message': answer}, status=200)
         else:
-            return JsonResponse({'message': form.errors})
-    return JsonResponse({'message': 'Invalid request'})
+            return JsonResponse({'error': form.errors}, status=500)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+def seeTopics(request):
+    if request.method == 'POST':
+        if 'id' in request.POST:
+            courseId = int(request.POST['id'])
+            try:
+                topics = Topic.objects.filter(course_id=courseId).all()
+                topics = [{'name': el.name, 'topic_id': el.topic_id} for el in topics]
+                return JsonResponse({'topics': topics}, status=200)
+            except:
+                return JsonResponse({'error': 'Unknown error'}, status=500)
+        else:
+            return JsonResponse({'error': 'No ID in the request'}, status=400)
+
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
