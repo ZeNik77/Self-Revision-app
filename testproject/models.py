@@ -21,7 +21,7 @@ class Topic(models.Model):
     description = models.TextField()
     course_id = models.IntegerField()
     user_id = models.IntegerField()
-    revisions = ArrayField(models.TextField(), default=list)
+    revision = models.TextField(default=str)
 
 class CourseChatHistory(models.Model):
     course_id = models.IntegerField()

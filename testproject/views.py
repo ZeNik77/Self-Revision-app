@@ -4,7 +4,7 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
@@ -325,8 +325,7 @@ def topic(request, course_id, topic_id):
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
-            revision = revise(course.name, topic.name, topic.description)
-            topic.revisions.append(revision)
+            topic.revision = revise(course.name, topic.name, topic.description)
             topic.save()
         if 'submit_test' in request.POST:
             test = Test.objects.filter(topic_id=topic_id)
@@ -361,10 +360,6 @@ def topic(request, course_id, topic_id):
             t_id = request.POST['delete_topic']
             delete_topic(t_id)
             return redirect(reverse('topic', args=(course_id, topic_id)))
-        if 'delete_revision' in request.POST:
-            rev_i = int(request.POST['delete_revision'])
-            topic.revisions.pop(rev_i)
-            topic.save()
         if 'delete_test' in request.POST:
             test_id = request.POST['delete_test']
             if (test := Test.objects.filter(test_id=test_id)).exists():
@@ -376,6 +371,14 @@ def topic(request, course_id, topic_id):
             if form.is_valid():
                 description = form.cleaned_data['description']
                 topic.description = description
+                topic.save()
+            else:
+                print(form.errors)
+        if 'save_revision' in request.POST:
+            form = SaveRevisionForm(request.POST)
+            if form.is_valid():
+                revision = form.cleaned_data['revision']
+                topic.revision = revision
                 topic.save()
             else:
                 print(form.errors)
@@ -392,12 +395,18 @@ def topic(request, course_id, topic_id):
         testForm = TestForm2(questions=test.questions, correct=test.correct)
         correct = test.correct
         questions = test.questions
-    revisions = topic.revisions
+    revision = topic.revision
+    print(revision, '\n', f'"{revision.strip()}"')
+    if revision.replace('<br>', '').strip() == '':
+        revision = ''
+        topic.revision = ''
+        topic.save()
     return render(request, 'course.html', {
         'form': AIForm, 
         'addTopicForm': AddTopicForm, 
         'rag_form': RAGForm, 
         'saveTopicForm': SaveTopicForm,
+        'saveRevisionForm': SaveRevisionForm,
         'course': course, 
         'topics': topics, 
         'topic': topic, 
@@ -405,7 +414,7 @@ def topic(request, course_id, topic_id):
         'test_form': testForm, 
         'correct': json.dumps(correct), 
         'questions': json.dumps(questions), 
-        'revisions': revisions, 
+        'revision': revision, 
         'passed_tests': passed_tests, 
         'test_error': testError,
     })
@@ -439,7 +448,6 @@ def sendMessage(request):
         else:
             return JsonResponse({'error': form.errors}, status=500)
     return JsonResponse({'error': 'Invalid request'}, status=400)
-# Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
 
 def seeTopics(request):
     if request.method == 'POST':
@@ -453,3 +461,5 @@ def seeTopics(request):
                 return JsonResponse({'error': 'Unknown error'}, status=500)
         else:
             return JsonResponse({'error': 'No ID in the request'}, status=400)
+
+# Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.

@@ -158,3 +158,6 @@ class RAGForm(forms.Form):
     )
 class SaveTopicForm(forms.Form):
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicDescription', 'tabindex': "0", 'class': "hidden"}))
+
+class SaveRevisionForm(forms.Form):
+    revision = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicRevision', 'tabIndex': '0', 'class': 'hidden'}))
