@@ -193,6 +193,7 @@ def generate(history):
 
 
     API_KEY = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6ImJlMjgxY2IzLTgzYmYtNDIzMS1iNWQ1LTVlY2ZkNzcwNGY3ZiIsImV4cCI6NDkwNTY4MjAwNn0.Unm6RnQCdjytgIlyzXA8f1hyp0VN7ynCh6pBNwnkJNpeFT5BlZB6vEv375PBRT4ZggnVcvR2sADwPmn46lTSKw'
+    API_KEY_RESERVE = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6ImRlMmEwYWY2LWJiZTUtNGQ0Yy1iMGRlLTQ2ZjA4NjA1ZWMwYyIsImV4cCI6NDkwNjUyNDY2NX0.de6LDZG-XiWeVLdDBxTamUO26wJq5ZgFMhhRG6N9lf3V5WZN6UgcAeok2ktxTJ5VNhZsHwNw4fzUKnkgVSsM1A'
     API_URL = 'https://api.intelligence.io.solutions/api/v1/'
     MODEL = 'deepseek-ai/DeepSeek-R1-0528'
 
@@ -355,4 +356,4 @@ Write only the formatted summary without any introductions, conclusions, or extr
             topic_id = random.randint(2, 2147483646)
             while Topic.objects.filter(topic_id=topic_id).exists():
                 topic_id = random.randint(2, 2147483646)
-            Topic.objects.create(user_id=user_id, course_id=course_id, topic_id=topic_id, name=name, description=description, revisions=[])
+            Topic.objects.create(user_id=user_id, course_id=course_id, topic_id=topic_id, name=name, description=description, revision='')
