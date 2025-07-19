@@ -4,33 +4,22 @@ import random
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from django.core.files.storage import FileSystemStorage
-# from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_community.vectorstores import FAISS
 import os
 from .settings import MEDIA_ROOT
 from .models import CourseChatHistory, Topic, Courses
+from .KEYS import EMBED_TOKEN, API_KEY, API_KEY_RESERVE
 import openai
 import fitz
-# url = "https://api.intelligence.io.solutions/api/v1/chat/completions"
-# headers = {
-#     "Content-Type": "application/json",
-#     "Authorization": f"Bearer {api_key}"
-# }
-# data = {
-#     "model": "deepseek-ai/DeepSeek-R1",
-#     "messages": [
-#         {
-#             "role": "user",
-#             "content": content
-#         }
-#     ]
-# }
-# response.json()["choices"][0]["message"]["content"].split('</think>\n')[1]
+import os
 
-# Initialize embedding model (local for cost efficiency)
-# embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2")
+
+embeddings = HuggingFaceEndpointEmbeddings(
+    model="sentence-transformers/all-mpnet-base-v2",
+    task="feature-extraction",
+    huggingfacehub_api_token=EMBED_TOKEN,
+)
 
 def remove_images(input_pdf):
     doc = fitz.open(fullPath(input_pdf))
@@ -184,16 +173,6 @@ def generate_with_rag(history, path, course_id=-1, topic_id=-1, unified=False, d
 
 
 def generate(history):
-    # API_KEY = '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'
-    # API_URL = 'https://openrouter.ai/api/v1/chat/completions'
-    # MODEL = "deepseek/deepseek-chat:free"
-    
-    
-    # API_KEY = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6IjliMTVlODBmLWY3ODUtNDEzYy1hZjhiLTE5NDU4ODI5MTY4NSIsImV4cCI6NDkwNDUzOTE2N30.Xo4MbPTYxcjEq1TMwNQ_YTrGalMEn7U4oDOiadVsSnJbZiK_pRvh4pBU6UH8qr9uaVOKc1ryW6Yc--7ih0Ec6Q'
-
-
-    API_KEY = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6ImJlMjgxY2IzLTgzYmYtNDIzMS1iNWQ1LTVlY2ZkNzcwNGY3ZiIsImV4cCI6NDkwNTY4MjAwNn0.Unm6RnQCdjytgIlyzXA8f1hyp0VN7ynCh6pBNwnkJNpeFT5BlZB6vEv375PBRT4ZggnVcvR2sADwPmn46lTSKw'
-    API_KEY_RESERVE = 'io-v2-eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJvd25lciI6ImRlMmEwYWY2LWJiZTUtNGQ0Yy1iMGRlLTQ2ZjA4NjA1ZWMwYyIsImV4cCI6NDkwNjUyNDY2NX0.de6LDZG-XiWeVLdDBxTamUO26wJq5ZgFMhhRG6N9lf3V5WZN6UgcAeok2ktxTJ5VNhZsHwNw4fzUKnkgVSsM1A'
     API_URL = 'https://api.intelligence.io.solutions/api/v1/'
     MODEL = 'deepseek-ai/DeepSeek-R1-0528'
 

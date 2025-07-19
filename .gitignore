@@ -1,5 +1,6 @@
 /testproject/migrations/
 /testproject/__pycache__/
+/testproject/KEYS.py
 /db.sqlite3
 /har_and_cookies/
 /storage/
