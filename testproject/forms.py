@@ -161,3 +161,9 @@ class SaveTopicForm(forms.Form):
 
 class SaveRevisionForm(forms.Form):
     revision = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicRevision', 'tabIndex': '0', 'class': 'hidden'}))
+
+class UserPFPForm(forms.Form):
+    file = forms.FileField(label='Upload avatar', widget=forms.ClearableFileInput(attrs={
+        'id': 'avatar',
+        'type': 'file',
+    }))

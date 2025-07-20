@@ -4,7 +4,7 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm, UserPFPForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
@@ -12,37 +12,22 @@ import os
 import json
 
 def profile(request):
-    user = request.user
+    user = auth.get_user(request)
     results = []
 
     if request.method == "POST":
         # Загрузка аватарки
-        avatar = request.FILES.get("avatar")
-        if avatar:
-            user.avatar = avatar
+        if 'avatar' in request.POST:
+            form = UserPFPForm(request.POST, request.FILES)
+            if form.is_valid():
+                request.user.avatar = form.cleaned_data['file']
+                request.user.save()
+            else:
+                print(form.errors)
         if 'submit_seeResults' in request.POST:
             subtopic_id = request.POST.get("subtopic")
             try:
                 results = Test.objects.filter(topic_id=subtopic_id, passed=True)
-                # у нас как отображаются правильные и неправильные ответы в тесте?
-                # python shell выводит вот такое
-                # {
-                #     "answer": [
-                #         ".format() method",
-                #         "String concatenation",
-                #         "f-strings"
-                #     ],
-                #     "number": 1,
-                #     "question": "What is the primary method for formatting the greeting in the \"Hello, Harry!\" task?"
-                # },
-                # {
-                #     "answer": [
-                #         "+",
-                #         "&",
-                #         "*"
-                #     ],
-                # то есть у нас список вариантов ответа, но нет поля с правильным или выбранным ответом?
-                # наверное костыль но я не знаю как ещё вытащить правильные неправильные варианты
                 for test in results:
                     qlist = []
                     correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
@@ -62,36 +47,12 @@ def profile(request):
             except:
                 return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
 
-        user.save()
-        request.session["selected_subtopic"] = subtopic_id
-
-    elif request.method == "GET":
-        subtopic_id = request.session.get("selected_subtopic")
-        if subtopic_id:
-            results = Test.objects.filter(topic_id=subtopic_id, user_id=user.id, passed=True)
-            #
-            for test in results:
-                qlist = []
-                correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
-                incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
-                for q in test.questions:
-                    opts = q.get("answer", [])
-                    text = q.get("question", "")
-                    if text in correct_map:
-                        user_ans = correct_map[text]
-                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
-                    elif text in incorrect_map:
-                        user_ans, correct_ans = incorrect_map[text]
-                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
-                    else:
-                        qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
-                test.questions = qlist
-
     courses = Courses.objects.all()
     return render(request, "profile.html", {
         "user": user,
         "courses": courses,
-        "results": results
+        "results": results,
+        'pfpForm': UserPFPForm
     })
 # понятия не имею правильно ли я подключила, но работает криво? можно убрать и оставить дефолтную аватарку
 
@@ -265,7 +226,11 @@ def course(request, course_id):
         if 'delete_topic' in request.POST:
             return delete_topic(request, course_id)
         if 'add_topics_file' in request.POST:
+            ln = len(Topic.objects.filter(course_id=course_id).all())
             add_outline(request, course_id)
+            ln2 = len(Topic.objects.filter(course_id=course_id).all())
+            if ln == ln2:
+                return JsonResponse({'error': 'No topics found'}, status=500)
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:

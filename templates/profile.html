@@ -15,8 +15,11 @@
     </div>
 
     <div>
-        <label for="avatar">Upload avatar</label>
-        <input type="file" name="avatar" id="avatar" accept="image/*">
+      <form method="POST">
+        {{ pfpForm.file.label }}<br>
+        {{ pfpForm.file }}
+        <button type="submit" name="avatar" class="bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">Save profile picture</button>
+      </form>
         {% if user.avatar %}
             <img src="{{ user.avatar.url }}" alt="avatar" class="mt-2 h-20 w-20 rounded-full object-cover">
         {% endif %}
