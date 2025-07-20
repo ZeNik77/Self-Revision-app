@@ -74,7 +74,9 @@
 <div class="flex-1 p-6 overflow-y-auto">
     <h1 class="text-2xl font-bold mb-4">{{ course.name }}</h1>
     <p class="mb-6 text-gray-600">{{ course.description }}</p>
-
+    {% if topic %}
+    <h1 class="text-2xl font-bold mb-4">{{ topic.name }}</h1>
+    {% endif %}
     <!-- выбрать заголовок -->
 
 {% if topic %}
@@ -121,7 +123,6 @@
     <button name="save_revision" id="save_revision" class="px-2 py-1 text-sm border rounded hover:bg-gray-100">Save</button>
   </form>
 </div>
-
 <!-- добавляем подтему -->
 <div id="subtopicModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-80">
