@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.urls import re_path
+from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,5 +37,9 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('terms', views.terms, name='terms'),
     path('privacy', views.privacy, name='privacy'),
-    path('seeTopics_ajax/', views.seeTopics, name='seeTopics')
+    path('seeTopics_ajax/', views.seeTopics, name='seeTopics'),
+        re_path(r'^storage/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
+    path('seeStatus/', views.seeStatus, name='seeStatus'),
 ]

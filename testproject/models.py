@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
+from .settings import MEDIA_ROOT
 
 class User(AbstractUser):
     # id = models.BigAutoField(primary_key=True)

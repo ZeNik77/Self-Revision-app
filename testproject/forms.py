@@ -161,6 +161,13 @@ class SaveTopicForm(forms.Form):
 
 class SaveRevisionForm(forms.Form):
     revision = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'saveTopicRevision', 'tabIndex': '0', 'class': 'hidden'}))
+
+class UserPFPForm(forms.Form):
+    file = forms.FileField(label='Upload avatar', widget=forms.ClearableFileInput(attrs={
+        'id': 'avatar',
+        'type': 'file',
+    }))
+
 class AddTestForm(forms.Form):
     course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idAddTest', 'class': 'd-none'}))
     topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idAddTest', 'class': 'd-none'}))

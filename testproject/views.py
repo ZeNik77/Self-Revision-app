@@ -4,45 +4,40 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
-from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm
+from django.core.cache import cache
+from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm, UserPFPForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
 import random
 import os
 import json
 
+from django.middleware.csrf import CsrfViewMiddleware
+def check_csrf(request):
+    """Returns True if CSRF check passes, False otherwise."""
+    # Provide a dummy get_response callable
+    middleware = CsrfViewMiddleware(get_response=lambda req: None)
+    dummy_view = lambda req: None
+    # Run CSRF check
+    response = middleware.process_view(request, dummy_view, (), {})
+    return response is None
 def profile(request):
-    user = request.user
+    user = auth.get_user(request)
     results = []
 
     if request.method == "POST":
         # Загрузка аватарки
-        avatar = request.FILES.get("avatar")
-        if avatar:
-            user.avatar = avatar
+        if 'avatar' in request.POST:
+            form = UserPFPForm(request.POST, request.FILES)
+            if form.is_valid():
+                request.user.avatar = form.cleaned_data['file']
+                request.user.save()
+            else:
+                print(form.errors)
         if 'submit_seeResults' in request.POST:
             subtopic_id = request.POST.get("subtopic")
             try:
                 results = Test.objects.filter(topic_id=subtopic_id, passed=True)
-                # у нас как отображаются правильные и неправильные ответы в тесте?
-                # python shell выводит вот такое
-                # {
-                #     "answer": [
-                #         ".format() method",
-                #         "String concatenation",
-                #         "f-strings"
-                #     ],
-                #     "number": 1,
-                #     "question": "What is the primary method for formatting the greeting in the \"Hello, Harry!\" task?"
-                # },
-                # {
-                #     "answer": [
-                #         "+",
-                #         "&",
-                #         "*"
-                #     ],
-                # то есть у нас список вариантов ответа, но нет поля с правильным или выбранным ответом?
-                # наверное костыль но я не знаю как ещё вытащить правильные неправильные варианты
                 for test in results:
                     qlist = []
                     correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
@@ -62,36 +57,12 @@ def profile(request):
             except:
                 return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
 
-        user.save()
-        request.session["selected_subtopic"] = subtopic_id
-
-    elif request.method == "GET":
-        subtopic_id = request.session.get("selected_subtopic")
-        if subtopic_id:
-            results = Test.objects.filter(topic_id=subtopic_id, user_id=user.id, passed=True)
-            #
-            for test in results:
-                qlist = []
-                correct_map = {q["question"]: q["answer"] for q in test.correctQuestions or []}
-                incorrect_map = {q["question"]: (q["answer"], q["correct"]) for q in test.incorrectQuestions or []}
-                for q in test.questions:
-                    opts = q.get("answer", [])
-                    text = q.get("question", "")
-                    if text in correct_map:
-                        user_ans = correct_map[text]
-                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": user_ans})
-                    elif text in incorrect_map:
-                        user_ans, correct_ans = incorrect_map[text]
-                        qlist.append({"question": text, "options": opts, "user_answer": user_ans, "correct": correct_ans})
-                    else:
-                        qlist.append({"question": text, "options": opts, "user_answer": None, "correct": None})
-                test.questions = qlist
-
     courses = Courses.objects.all()
     return render(request, "profile.html", {
         "user": user,
         "courses": courses,
-        "results": results
+        "results": results,
+        'pfpForm': UserPFPForm
     })
 # понятия не имею правильно ли я подключила, но работает криво? можно убрать и оставить дефолтную аватарку
 
@@ -215,7 +186,7 @@ def courses (request):
         elif 'delete_course' in request.POST:
             course_id = request.POST['delete_course']
             courses = Courses.objects.filter(course_id=course_id)
-            topics = Topic.objects.filter(course_id=course_id)
+            topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
             history = CourseChatHistory.objects.filter(course_id=course_id)
             tests = Test.objects.filter(course_id=course_id)
             for el in topics:
@@ -257,6 +228,7 @@ def delete_topic(request, course_id, topicId=-1):
     else:
         return redirect(reverse('topic', args=[course_id, topicId]))
 def course(request, course_id):
+    notification = ''
     if request.method == 'POST':
         if 'add_topic' in request.POST:
             x = add_topic(request, course_id)
@@ -265,34 +237,55 @@ def course(request, course_id):
         if 'delete_topic' in request.POST:
             return delete_topic(request, course_id)
         if 'add_topics_file' in request.POST:
-            add_outline(request, course_id)
+            result = add_outline(request, course_id)
+            if result == False:
+                notification = 'No topics found.'
+            elif result:
+                return result
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
-    topics = Topic.objects.filter(course_id=course_id)
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics})
+    topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
+    return render(request, 'course.html', {
+        'form': AIForm,
+        'addTopicForm': AddTopicForm,
+        'rag_form': RAGForm,
+        'course': course,
+        'topics': topics,
+        'notification': notification
+    })
 
 def save_file(uploaded_file):
     fs = FileSystemStorage()
     # Сохраняем
     return fs.save(uploaded_file.name, uploaded_file)
 
-def add_outline(request, course_id):
-    form = RAGForm(request.POST, request.FILES)
-    print(request.FILES)
-    if form.is_valid():
-        uploaded_file = form.cleaned_data['file']
-        file_path = save_file(uploaded_file)
-        # try:
-        divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
-        # except Exception as e:
-        #     print('=====\n', e, '\n=====')
-        return redirect(reverse('course', args=(course_id,)))
+def add_outline(request, course_id, topic_id=-1):
+    if check_csrf(request):
+        ln = len(Topic.objects.filter(course_id=course_id).all())
+        form = RAGForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = form.cleaned_data['file']
+            file_path = save_file(uploaded_file)
+            divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
+        else:
+            print(form.errors)
+        ln2 = len(Topic.objects.filter(course_id=course_id).all())
+        if ln == ln2:
+            print('none was generated, returned False')
+            return False
+        print('generated fine')
     else:
-        print(form.errors)
+        if topic_id != -1:
+            print('redirected to topic')
+            return redirect(reverse('topic', args=[course_id, topic_id]))
+        else:
+            print('redirected to course')
+            return redirect(reverse('course', args=[course_id]))
 
 def topic(request, course_id, topic_id):
+    notification = ''
     testError = ''
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists():
         return redirect(reverse('courses'))
@@ -320,13 +313,15 @@ def topic(request, course_id, topic_id):
                 for el in Test.objects.filter(topic_id=topic_id, passed=False):
                     if el.test_id != test_id:
                         el.delete()
+                notification = 'Created a test. Click "Test" button again.'
             except:
-                testError = 'Error while generating the test. Please try again.'
+                notification = 'Failed to create a test'
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
             topic.revision = revise(course.name, topic.name, topic.description)
             topic.save()
+            notification = 'Created a revision. Click "Revision" button again'
         if 'submit_test' in request.POST:
             test = Test.objects.filter(topic_id=topic_id)
             if test.exists():
@@ -353,6 +348,7 @@ def topic(request, course_id, topic_id):
                 test.incorrectQuestions = incorrectQ
                 test.passed = True
                 test.save()
+                notification = 'Test result is saved. See it in your profile, via this subtopic.'
             else:
                 print(form.errors)
 
@@ -365,7 +361,11 @@ def topic(request, course_id, topic_id):
             if (test := Test.objects.filter(test_id=test_id)).exists():
                 test.delete()
         if 'add_topics_file' in request.POST:
-            add_outline(request, course_id)
+            result = add_outline(request, course_id, topic_id)
+            if result == False:
+                notification = 'No topics found.'
+            elif result:
+                return result
         if 'save_topic' in request.POST:
             form = SaveTopicForm(request.POST)
             if form.is_valid():
@@ -382,7 +382,7 @@ def topic(request, course_id, topic_id):
                 topic.save()
             else:
                 print(form.errors)
-    topics = Topic.objects.filter(course_id=course_id)
+    topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
     if not test.exists():
@@ -417,6 +417,7 @@ def topic(request, course_id, topic_id):
         'revision': revision, 
         'passed_tests': passed_tests, 
         'test_error': testError,
+        'notification': notification
     })
     
 def home(request):
@@ -454,7 +455,7 @@ def seeTopics(request):
         if 'id' in request.POST:
             courseId = int(request.POST['id'])
             try:
-                topics = Topic.objects.filter(course_id=courseId).all()
+                topics = Topic.objects.filter(course_id=courseId).order_by('topic_id').all()
                 topics = [{'name': el.name, 'topic_id': el.topic_id} for el in topics]
                 return JsonResponse({'topics': topics}, status=200)
             except:
@@ -463,3 +464,11 @@ def seeTopics(request):
             return JsonResponse({'error': 'No ID in the request'}, status=400)
 
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
+
+def seeStatus(request):
+    oldStatus = cache.get('divideIntoSubtopicsStatusOld')
+    status = cache.get('divideIntoSubtopicsStatus')
+    if status == oldStatus:
+        return JsonResponse({}, status=200)
+    cache.set('divideIntoSubtopicsStatusOld', status)
+    return JsonResponse({'status': status}, status=200)

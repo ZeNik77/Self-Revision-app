@@ -58,12 +58,12 @@ MIDDLEWARE_CLASSES = [
     'livereload.middleware.LiveReloadScript',
 ]
 
-# disable or enable caching (fake caching)
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
 
 ROOT_URLCONF = 'testproject.urls'
 
@@ -143,7 +143,13 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = 'staticfiles/'
-MEDIA_ROOT = 'storage/'
+STATICFILES_DIRS = (
+  os.path.join(BASE_DIR, 'static/'),
+)
+
+
+MEDIA_URL = '/storage/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'storage')
 
 STATICFILES_DIRS = (
   os.path.join(BASE_DIR, 'static/'),
