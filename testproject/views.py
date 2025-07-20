@@ -443,7 +443,6 @@ def sendMessage(request):
             topic_description = form.cleaned_data['topic_description']
 
             topic_name = Topic.objects.get(topic_id=topic_id).name
-            topic_description = Topic.objects.get(topic_id=topic_id).description
 
             answer = deepSeek(input, course, course_id, topic_name, topic_description)
             return JsonResponse({'message': answer}, status=200)
