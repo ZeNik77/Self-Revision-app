@@ -11,6 +11,16 @@ import random
 import os
 import json
 
+from django.middleware.csrf import CsrfViewMiddleware
+
+def check_csrf(request):
+    """Returns True if CSRF check passes, False otherwise."""
+    # Provide a dummy get_response callable
+    middleware = CsrfViewMiddleware(get_response=lambda req: None)
+    dummy_view = lambda req: None
+    # Run CSRF check
+    response = middleware.process_view(request, dummy_view, (), {})
+    return response is None
 def profile(request):
     user = auth.get_user(request)
     results = []
@@ -227,11 +237,11 @@ def course(request, course_id):
         if 'delete_topic' in request.POST:
             return delete_topic(request, course_id)
         if 'add_topics_file' in request.POST:
-            ln = len(Topic.objects.filter(course_id=course_id).all())
-            add_outline(request, course_id)
-            ln2 = len(Topic.objects.filter(course_id=course_id).all())
-            if ln == ln2:
+            result = add_outline(request, course_id)
+            if result == False:
                 no_topics_generated = True
+            elif result:
+                return result
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
@@ -251,21 +261,31 @@ def save_file(uploaded_file):
     # Сохраняем
     return fs.save(uploaded_file.name, uploaded_file)
 
-def add_outline(request, course_id):
-    form = RAGForm(request.POST, request.FILES)
-    print(request.FILES)
-    if form.is_valid():
-        uploaded_file = form.cleaned_data['file']
-        file_path = save_file(uploaded_file)
-        # try:
-        divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
-        # except Exception as e:
-        #     print('=====\n', e, '\n=====')
-        return redirect(reverse('course', args=(course_id,)))
+def add_outline(request, course_id, topic_id=-1):
+    if check_csrf(request):
+        ln = len(Topic.objects.filter(course_id=course_id).all())
+        form = RAGForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = form.cleaned_data['file']
+            file_path = save_file(uploaded_file)
+            divideToSubtopics(file_path, course_id, auth.get_user(request).user_id)
+        else:
+            print(form.errors)
+        ln2 = len(Topic.objects.filter(course_id=course_id).all())
+        if ln == ln2:
+            print('none was generated, returned False')
+            return False
+        print('generated fine')
     else:
-        print(form.errors)
+        if topic_id != -1:
+            print('redirected to topic')
+            return redirect(reverse('topic', args=[course_id, topic_id]))
+        else:
+            print('redirected to course')
+            return redirect(reverse('course', args=[course_id]))
 
 def topic(request, course_id, topic_id):
+    no_topics_generated = False
     testError = ''
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists():
         return redirect(reverse('courses'))
@@ -338,7 +358,11 @@ def topic(request, course_id, topic_id):
             if (test := Test.objects.filter(test_id=test_id)).exists():
                 test.delete()
         if 'add_topics_file' in request.POST:
-            add_outline(request, course_id)
+            result = add_outline(request, course_id, topic_id)
+            if result == False:
+                no_topics_generated = True
+            elif result:
+                return result
         if 'save_topic' in request.POST:
             form = SaveTopicForm(request.POST)
             if form.is_valid():
@@ -390,6 +414,7 @@ def topic(request, course_id, topic_id):
         'revision': revision, 
         'passed_tests': passed_tests, 
         'test_error': testError,
+        'no_topics_generated': no_topics_generated
     })
     
 def home(request):
