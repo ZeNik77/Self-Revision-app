@@ -218,6 +218,7 @@ def delete_topic(request, course_id, topicId=-1):
     else:
         return redirect(reverse('topic', args=[course_id, topicId]))
 def course(request, course_id):
+    no_topics_generated = False
     if request.method == 'POST':
         if 'add_topic' in request.POST:
             x = add_topic(request, course_id)
@@ -230,13 +231,20 @@ def course(request, course_id):
             add_outline(request, course_id)
             ln2 = len(Topic.objects.filter(course_id=course_id).all())
             if ln == ln2:
-                return JsonResponse({'error': 'No topics found'}, status=500)
+                no_topics_generated = True
     if Courses.objects.filter(course_id=course_id).exists():
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
     topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
-    return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics})
+    return render(request, 'course.html', {
+        'form': AIForm,
+        'addTopicForm': AddTopicForm,
+        'rag_form': RAGForm,
+        'course': course,
+        'topics': topics,
+        'no_topics_generated': no_topics_generated
+        })
 
 def save_file(uploaded_file):
     fs = FileSystemStorage()
