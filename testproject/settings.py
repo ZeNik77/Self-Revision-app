@@ -58,12 +58,12 @@ MIDDLEWARE_CLASSES = [
     'livereload.middleware.LiveReloadScript',
 ]
 
-# disable or enable caching (fake caching)
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
 
 ROOT_URLCONF = 'testproject.urls'
 

@@ -4,6 +4,7 @@ from django.contrib import auth
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.core.files.storage import FileSystemStorage
+from django.core.cache import cache
 from .forms import SignUpForm, LoginForm, AddCourseForm, AIForm, AddTopicForm, TestForm2, RAGForm, SaveTopicForm, SaveRevisionForm, UserPFPForm
 from .models import User, Courses, CourseChatHistory, Topic, Test
 from .generate import revise, deepSeek, generateTest, divideToSubtopics
@@ -12,7 +13,6 @@ import os
 import json
 
 from django.middleware.csrf import CsrfViewMiddleware
-
 def check_csrf(request):
     """Returns True if CSRF check passes, False otherwise."""
     # Provide a dummy get_response callable
@@ -228,7 +228,7 @@ def delete_topic(request, course_id, topicId=-1):
     else:
         return redirect(reverse('topic', args=[course_id, topicId]))
 def course(request, course_id):
-    no_topics_generated = False
+    notification = ''
     if request.method == 'POST':
         if 'add_topic' in request.POST:
             x = add_topic(request, course_id)
@@ -239,7 +239,7 @@ def course(request, course_id):
         if 'add_topics_file' in request.POST:
             result = add_outline(request, course_id)
             if result == False:
-                no_topics_generated = True
+                notification = 'No topics found.'
             elif result:
                 return result
     if Courses.objects.filter(course_id=course_id).exists():
@@ -253,7 +253,7 @@ def course(request, course_id):
         'rag_form': RAGForm,
         'course': course,
         'topics': topics,
-        'no_topics_generated': no_topics_generated
+        'notification': notification
     })
 
 def save_file(uploaded_file):
@@ -285,7 +285,7 @@ def add_outline(request, course_id, topic_id=-1):
             return redirect(reverse('course', args=[course_id]))
 
 def topic(request, course_id, topic_id):
-    no_topics_generated = False
+    notification = ''
     testError = ''
     if not auth.get_user(request).is_active or not Courses.objects.filter(user_id=auth.get_user(request).user_id, course_id=course_id).exists():
         return redirect(reverse('courses'))
@@ -313,13 +313,15 @@ def topic(request, course_id, topic_id):
                 for el in Test.objects.filter(topic_id=topic_id, passed=False):
                     if el.test_id != test_id:
                         el.delete()
+                notification = 'Created a test. Click "Test" button again.'
             except:
-                testError = 'Error while generating the test. Please try again.'
+                notification = 'Failed to create a test'
         if 'submit_revision' in request.POST:
             course = Courses.objects.get(course_id=course_id)
             topic = Topic.objects.get(topic_id=topic_id)
             topic.revision = revise(course.name, topic.name, topic.description)
             topic.save()
+            notification = 'Created a revision. Click "Revision" button again'
         if 'submit_test' in request.POST:
             test = Test.objects.filter(topic_id=topic_id)
             if test.exists():
@@ -346,6 +348,7 @@ def topic(request, course_id, topic_id):
                 test.incorrectQuestions = incorrectQ
                 test.passed = True
                 test.save()
+                notification = 'Test result is saved. See it in your profile, via this subtopic.'
             else:
                 print(form.errors)
 
@@ -360,7 +363,7 @@ def topic(request, course_id, topic_id):
         if 'add_topics_file' in request.POST:
             result = add_outline(request, course_id, topic_id)
             if result == False:
-                no_topics_generated = True
+                notification = 'No topics found.'
             elif result:
                 return result
         if 'save_topic' in request.POST:
@@ -414,7 +417,7 @@ def topic(request, course_id, topic_id):
         'revision': revision, 
         'passed_tests': passed_tests, 
         'test_error': testError,
-        'no_topics_generated': no_topics_generated
+        'notification': notification
     })
     
 def home(request):
@@ -461,3 +464,11 @@ def seeTopics(request):
             return JsonResponse({'error': 'No ID in the request'}, status=400)
 
 # Градиент — это вектор, указывающий направление наибольшего возрастания функции. Для функции нескольких переменных f(x, y, z...) градиент ∇f = (∂f/∂x, ∂f/∂y, ∂f/∂z, ...) состоит из её частных производных. Он показывает, как и куда функция возрастает быстрее всего. Если градиент равен нулю, это может быть точка экстремума.
+
+def seeStatus(request):
+    oldStatus = cache.get('divideIntoSubtopicsStatusOld')
+    status = cache.get('divideIntoSubtopicsStatus')
+    if status == oldStatus:
+        return JsonResponse({}, status=200)
+    cache.set('divideIntoSubtopicsStatusOld', status)
+    return JsonResponse({'status': status}, status=200)

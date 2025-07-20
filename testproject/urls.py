@@ -41,4 +41,5 @@ urlpatterns = [
         re_path(r'^storage/(?P<path>.*)$', serve, {
         'document_root': settings.MEDIA_ROOT,
     }),
+    path('seeStatus/', views.seeStatus, name='seeStatus'),
 ]

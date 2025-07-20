@@ -4,28 +4,29 @@ import random
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from django.core.files.storage import FileSystemStorage
-# from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 import os
 from .settings import MEDIA_ROOT
 from .models import CourseChatHistory, Topic, Courses
 from .KEYS import EMBED_TOKEN, API_KEY_IONET, EMBED_TOKEN_RESERVE, API_KEY_ANDREI
+from django.core.cache import cache
 import openai
 import fitz
 import os
 
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-large",
-    openai_api_key=API_KEY_ANDREI,
-    openai_api_base="https://api.proxyapi.ru/openai/v1"
-)
-
-# embeddings = HuggingFaceEndpointEmbeddings(
-#     model="sentence-transformers/all-mpnet-base-v2",
-#     task="feature-extraction",
-#     huggingfacehub_api_token=EMBED_TOKEN,
+# embeddings = OpenAIEmbeddings(
+#     model="text-embedding-3-large",
+#     openai_api_key=API_KEY_ANDREI,
+#     openai_api_base="https://api.proxyapi.ru/openai/v1"
 # )
+
+embeddings = HuggingFaceEndpointEmbeddings(
+    model="sentence-transformers/all-mpnet-base-v2",
+    task="feature-extraction",
+    huggingfacehub_api_token=EMBED_TOKEN,
+)
 
 def remove_images(input_pdf):
     doc = fitz.open(fullPath(input_pdf))
@@ -185,9 +186,15 @@ def generate(history):
     API_URL_PROXYAPI = 'https://api.proxyapi.ru/deepseek'
     MODEL_PROXYAPI = 'deepseek-chat'
 
-    API_KEY = API_KEY_ANDREI
-    API_URL = API_URL_PROXYAPI
-    MODEL = MODEL_PROXYAPI
+    # API_KEY = API_KEY_ANDREI
+    # API_URL = API_URL_PROXYAPI
+    # MODEL = MODEL_PROXYAPI
+
+
+    API_KEY = API_KEY_IONET
+    API_URL = API_URL_IONET
+    MODEL = MODEL_IONET
+
 
     client = openai.OpenAI(
         api_key=API_KEY,
@@ -201,8 +208,8 @@ def generate(history):
         stream=False,
         # max_completion_tokens=50
     )
-    # return response.choices[0].message.content.split('</think>\n')[1]
-    return response.choices[0].message.content
+    return response.choices[0].message.content.split('</think>\n')[1]
+    # return response.choices[0].message.content
 
 def revise(course, topic_name, topic_description):
     content = f"""You are a study assistant. Generate a clear, structured summary in English on the topic "{topic_name}" from the course "{course}", using the following description as your reference:
@@ -289,14 +296,16 @@ Guidelines:
     # print('here-1')
     # try:
     att = 1
-    print('Dividing: Attempt', att)
-
+    cache.set('divideIntoSubtopicsStatusOld', '')
+    cache.set('divideIntoSubtopicsStatus', f'Dividing into subtopics. Attempt {att}.')
     hist, x = generate_with_rag([{'role': 'user', 'content': content}], path, course_id=course_id, delete=True)
+    print('\n\n\n', cache.get('divideIntoSubtopicsStatus'), '\n\n\n')
     while 'FOUND NOTHING' in x:
         att += 1
         if att > 5:
             return
-        print('Dividing: Attempt', att)
+        cache.set('divideIntoSubtopicsStatus', f'Dividing into subtopics. Attempt {att}.')
+        print(cache.get('divideIntoSubtopicsStatus'))
         hist, x = generate_with_rag([{'role': 'user', 'content': content}], '', course_id=course_id, unified=True)
     x = x.replace('\n', '')
     print('topics found', x)
@@ -310,7 +319,8 @@ Guidelines:
     if topics:
         for topic in topics:
             name = topic.capitalize()
-            print('processing topic "', name, '"', sep='')
+            cache.set('divideIntoSubtopicsStatus', f'Processing topics: "{name}"')
+            print(cache.get('divideIntoSubtopicsStatus'))
             course = Courses.objects.get(course_id=course_id).name
             # content2 = f"Summarize the following information about the topic \"{name}\" into a clear, structured summary using bullet points. Focus only on what’s in the supplied material. Do NOT add any extra content or assumptions."
             content2 = f"""You are a study assistant. Generate a clear, structured summary in English about the topic "{name}" from the course "{course}".
