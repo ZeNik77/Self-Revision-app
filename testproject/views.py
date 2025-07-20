@@ -176,7 +176,7 @@ def courses (request):
         elif 'delete_course' in request.POST:
             course_id = request.POST['delete_course']
             courses = Courses.objects.filter(course_id=course_id)
-            topics = Topic.objects.filter(course_id=course_id)
+            topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
             history = CourseChatHistory.objects.filter(course_id=course_id)
             tests = Test.objects.filter(course_id=course_id)
             for el in topics:
@@ -235,7 +235,7 @@ def course(request, course_id):
         course = Courses.objects.get(course_id=course_id)
     else:
         return redirect(reverse('courses'))
-    topics = Topic.objects.filter(course_id=course_id)
+    topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
     return render(request, 'course.html', {'form': AIForm, 'addTopicForm': AddTopicForm, 'rag_form': RAGForm, 'course': course, 'topics': topics})
 
 def save_file(uploaded_file):
@@ -347,7 +347,7 @@ def topic(request, course_id, topic_id):
                 topic.save()
             else:
                 print(form.errors)
-    topics = Topic.objects.filter(course_id=course_id)
+    topics = Topic.objects.filter(course_id=course_id).order_by('topic_id')
     test = Test.objects.filter(topic_id=topic_id, passed=False)
     passed_tests = Test.objects.filter(topic_id=topic_id, passed=True)
     if not test.exists():
@@ -419,7 +419,7 @@ def seeTopics(request):
         if 'id' in request.POST:
             courseId = int(request.POST['id'])
             try:
-                topics = Topic.objects.filter(course_id=courseId).all()
+                topics = Topic.objects.filter(course_id=courseId).order_by('topic_id').all()
                 topics = [{'name': el.name, 'topic_id': el.topic_id} for el in topics]
                 return JsonResponse({'topics': topics}, status=200)
             except:
