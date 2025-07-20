@@ -321,7 +321,7 @@ def topic(request, course_id, topic_id):
             topic = Topic.objects.get(topic_id=topic_id)
             topic.revision = revise(course.name, topic.name, topic.description)
             topic.save()
-            notification = 'Created a revision. Click "Revision" button again'
+            notification = 'Created a revision. Click "Revise" button again'
         if 'submit_test' in request.POST:
             test = Test.objects.filter(topic_id=topic_id)
             if test.exists():
