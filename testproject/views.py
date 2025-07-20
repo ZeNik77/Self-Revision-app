@@ -435,19 +435,17 @@ def about(request):
 
 def sendMessage(request):
     if request.method == 'POST':
-        form = AIForm(request.POST, request.FILES)
+        form = AIForm(request.POST)
         if form.is_valid():
             input = form.cleaned_data['prompt']
-            course = form.cleaned_data['course']
             course_id = form.cleaned_data['course_id']
-            topic_name = form.cleaned_data['topic_name']
+            topic_id = form.cleaned_data['topic_id']
             topic_description = form.cleaned_data['topic_description']
-            internet_toggle = form.cleaned_data['internet_toggle']
-            file_path = ''
-            if form.cleaned_data['file']:
-                uploaded_file = form.cleaned_data['file']
-                file_path = save_file(uploaded_file)
-            answer = deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path)
+
+            topic_name = Topic.objects.get(topic_id=topic_id).name
+            topic_description = Topic.objects.get(topic_id=topic_id).description
+
+            answer = deepSeek(input, course, course_id, topic_name, topic_description)
             return JsonResponse({'message': answer}, status=200)
         else:
             return JsonResponse({'error': form.errors}, status=500)

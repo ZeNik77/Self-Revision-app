@@ -92,33 +92,10 @@ class AIForm(forms.Form):
             }
         )
     )
-    file = forms.FileField(
-        label="Upload File",
-        required=False,
-        # max_size=5*1024*1024,
-        # allowed_extensions=['pdf', 'docx', 'txt'],
-        widget=forms.ClearableFileInput(
-            attrs={
-                "id": "fileInput",
-                "class": "form-control",
-            }
-        )
-    )
-    internet_toggle = forms.BooleanField(
-        label="Поиск 🔍",
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input',
-            'role': 'switch',
-            'data-toggle': 'toggle',
-            'id': 'internetToggle'
-        })
-    )
-    course = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'courseText', 'class': 'hidden'}))
+    topic_description = forms.CharField(required=False, widget=forms.Textarea(attrs={'id': 'topic_descriptionText', 'class': 'hidden'}))
     course_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'course_idText', 'class': 'hidden'}))
-    topic_name = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_nameText', 'class': 'hidden'}))
-    topic_description = forms.CharField(required=False, widget=forms.TextInput(attrs={'id': 'topic_descriptionText', 'class': 'hidden'}))
-
+    topic_id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'id': 'topic_idText', 'class': 'hidden'}))
+    
 class AddTopicForm(forms.Form):
     topic_name = forms.CharField(
         label="Topic Name",

@@ -155,14 +155,11 @@
     <div id="aiMain" class="flex flex-col gap-3">
 <form id="aiForm">
   {{ form.prompt }}
-  {{ form.file.label_tag }}
-  {{ form.file }}
-  {{ form.course }}
-  {{ form.course_id }}
-  {{ form.topic_name }}
   {{ form.topic_description }}
+  {{ form.course_id }}
+  {{ form.topic_id }}
   <div class="flex justify-between items-center">
-      <button id="sendQuestion" class="w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-600 flex items-center justify-center">
+      <button type="submit" id="sendQuestion" class="w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-600 flex items-center justify-center">
           <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -325,6 +322,7 @@
         </form>
     </div>
 </div>
+</div>
 <script>
   function confirmDeleteTopic(name) {
       return confirm("Are you sure you want to delete the topic " + name + "?");
@@ -351,17 +349,16 @@ function toggleRevise() {
     document.getElementById("cancelModal").onclick = () => {
         document.getElementById("subtopicModal").classList.add("hidden");
     };
-
+    
+    document.getElementById("openAIPopup").onclick = () => {
+        aiPopup.classList.toggle("hidden");
+    };
+    {% if test %}
     const aiPopup = document.getElementById("aiPopup");
     const aiMain = document.getElementById("aiMain");
     const testSetup = document.getElementById("testSetup");
     const testContainer = document.getElementById("testContainer");
-
-    document.getElementById("openAIPopup").onclick = () => {
-        aiPopup.classList.toggle("hidden");
-    };
-
-    // нужно заменить на API
+        // нужно заменить на API
     let questions = [];
     let answers = [];
     let currentQuestionIndex = 0;
@@ -376,27 +373,7 @@ function toggleRevise() {
       });
       ind++;
     }
-    $(document).ready(function (){
-
-    });
-    // {% for field in test_form %}
-    //   questions.push({
-    //     q: "{{ field.label|escapejs }}",
-    //     options: [
-    //       {% for radio in field %}
-    //         "{{ radio.choice_label|escapejs }}"{% if not forloop.last %},{% endif %}
-    //       {% endfor %}
-    //     ],
-    //     correct: ""
-    //   });
-    // {% endfor %}
-    
-    // {% for c in correct %}
-    // question[{{ forloop.counter0 }}].correct = "{{ c|escapejs }}";
-    // {% endfor %}
-    // $(document).ready(function() {
-
-    // });
+    {% endif %}
     document.getElementById("loadTestBtn").onclick = () => {
         aiMain.classList.add("hidden");
         testSetup.classList.remove("hidden");
@@ -505,35 +482,6 @@ function toggleRevise() {
         document.execCommand("foreColor", false, this.value);
     };
 </script>
-<script>
-  $(document).ready(function() {
-      $('#aiForm').on('submit', function(event) {
-          event.preventDefault();
-          $('#courseText').val('{{ course.name }}')
-          $('#topic_nameText').val('{{ topic.name }}')
-          $('#course_idText').val('{{ course.course_id }}')
-          $('#topic_descriptionText').val('{{ topic.description }}')
-          formData = new FormData(this);
-          $('#loadingText').removeClass('hidden');
-          $.ajax({
-              url: '{% url "sendMessage" %}',
-              type: 'POST',
-              contentType: false,
-              processData: false,
-              data: formData,
-              success: function(response) {
-                  $('#loadingText').addClass('hidden');
-                  $('#aiAnswerBox').removeClass('hidden');
-                  $('#fileInput').val('');   
-                  $('#aiAnswer').html(response.message);
-                  $(function () {
-                    $(".latex").latex();
-                  });
-              }
-          });
-      });
-  });
-</script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="{% static '/js/latex.js' %}"></script>
 
@@ -595,4 +543,39 @@ function convert(htmlString) {
   }
 </script>
 <script src="{% static './js/assistant.js' %}"></script>
+<script defer>
+  $(document).ready(function() {
+      console.log("HERE");
+      $('#aiForm').on('submit', function(event) {
+          event.preventDefault();
+          $('#{{ form.topic_id.id_for_label }}').val('{{ topic.topic_id }}');
+          $('#{{ form.course_id.id_for_label }}').val('{{ course.course_id }}');
+          const formData = new FormData(this);
+          $.ajax({
+              headers: {
+                  'X-CSRFToken': '{{ csrf_token }}'
+              },
+              url: '{% url "sendMessage" %}',
+              type: 'POST',
+              contentType: false,
+              processData: false,
+              // data: {
+              //   prompt: $("#{{ form.prompt.id_for_label }}").text(),
+              //   topic_description: convert($('#editor').html()),
+              //   course_id: ,
+              //   topic_id: parseInt('{{ topic.topic_id }}')
+              // },
+              data: formData,
+              success: function(response) {
+                  $('#aiAnswerBox').removeClass('hidden');
+                  $('#aiAnswer').html(response.message);
+                  $(function () {
+                    $(".latex").latex();
+                  });
+              }
+          });
+      });
+  });
+
+</script>
 {% endblock %}

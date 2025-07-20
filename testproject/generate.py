@@ -229,7 +229,7 @@ Do not include any greetings, introductions, or explanations—return only the s
     answer = generate([{'role': 'user', 'content': content}])
     return answer
 
-def deepSeek(input, course, course_id, topic_name, topic_description, internet_toggle, file_path):
+def deepSeek(input, course, course_id, topic_name, topic_description):
     content = f"""You are a study assistant. Answer the user's question strictly on the topic "{topic_name}" from the course "{course}", using the following summary as your reference:
 
 {topic_description}
@@ -253,11 +253,7 @@ Here is the question: {input}
         history = CourseChatHistory.objects.create(course_id=course_id, history=[])
     history.history.append({"role": "user", 'message': input, "content": content})
     history.save() 
-    if file_path:
-        new_history, answer = generate_with_rag(history.history, file_path, topic_id=topic_name, delete=True, unified=True, save=False)
-        history.history = new_history
-    else:
-        answer = generate(history.history)
+    answer = generate(history.history)
     history.history.append({'role': 'assistant', 'content': answer})
     history.save()
     return answer

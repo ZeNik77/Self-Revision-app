@@ -1,5 +1,5 @@
-const aiButton = document.getElementById('aiButton');
-const aiWindow = document.getElementById('aiWindow');
+const aiButton = document.getElementById('openAIPopup');
+const aiWindow = document.getElementById('aiPopup');
 const aiClose = document.getElementById('aiClose');
 const aiInput = document.getElementById('aiInput');
 const aiSend = document.getElementById('aiSend');
