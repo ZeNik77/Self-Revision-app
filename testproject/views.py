@@ -56,8 +56,11 @@ def profile(request):
                     test.questions = qlist
             except:
                 return JsonResponse(data={'error': 'UNKNOWN ERROR'}, status=500)
-
-    courses = Courses.objects.all()
+    tests = Test.objects.filter(user_id=request.user.user_id, passed=True)
+    courses = set()
+    for el in tests:
+        courses.add(Courses.objects.get(course_id=el.course_id))
+    courses = [course for course in courses]
     return render(request, "profile.html", {
         "user": user,
         "courses": courses,
@@ -455,11 +458,14 @@ def seeTopics(request):
         if 'id' in request.POST:
             courseId = int(request.POST['id'])
             try:
-                topics = Topic.objects.filter(course_id=courseId).order_by('topic_id').all()
+                topics = set()
+                tests = Test.objects.filter(course_id=courseId, user_id=auth.get_user(request).user_id, passed=True)
+                for el in tests:
+                    topics.add(Topic.objects.get(topic_id=el.topic_id))
                 topics = [{'name': el.name, 'topic_id': el.topic_id} for el in topics]
                 return JsonResponse({'topics': topics}, status=200)
-            except:
-                return JsonResponse({'error': 'Unknown error'}, status=500)
+            except Exception as e:
+                return JsonResponse({'error': f'Unknown error: {e}'}, status=500)
         else:
             return JsonResponse({'error': 'No ID in the request'}, status=400)
 
