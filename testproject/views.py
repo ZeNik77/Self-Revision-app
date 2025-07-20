@@ -244,7 +244,7 @@ def course(request, course_id):
         'course': course,
         'topics': topics,
         'no_topics_generated': no_topics_generated
-        })
+    })
 
 def save_file(uploaded_file):
     fs = FileSystemStorage()
